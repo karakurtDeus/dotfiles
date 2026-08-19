@@ -12,6 +12,22 @@ logo() {
 	fi
 }
 
+createStdDir(){
+	local listDirs=(
+		"Documents"
+		"Downloads"
+		"Music"
+		"Pictures"
+		"Videos"
+		"Projects"
+	)
+
+	for dir in "${listDirs[@]}"; do
+		mkdir -p $HOME/$dir &>> log
+	done
+
+}
+
 installPkgs(){
 	local -a listPkgs=("${@}")
 
@@ -23,7 +39,7 @@ installPkgs(){
 				echo "[OK] $pkg installed"
 			else
 				echo "[FAIL] $pkg installed"
-				return 1
+				exit 1
 			fi
 		fi
 
@@ -49,6 +65,7 @@ systemPkgs(){
 
 		# code editor
 		"vim"
+		"neovim"
 
 		# version control
 		"git"
@@ -57,11 +74,34 @@ systemPkgs(){
 		# terminal
 		"kitty"
 
+		# file manager
+		"thunar"
+
 		# launcher
 		"rofi"
 
+		# web utils
+		"wget"
+
+		# screen shot
+		"flameshot"
+
+		# network
+		"networkmanager" # for nmtui and other
+
+		# multimedia
+		"pipewire"
+		"wireplumber"
+		"pipewire-pulse"
+		"pipewire-alsa"
+		"pipewire-jack"
+		"pavucontrol"
+
 		# bar
 		"polybar"
+
+		# notification
+		"dunst"
 
 		# WM manager and other tools
 		"bspwm"
@@ -69,6 +109,7 @@ systemPkgs(){
 		"xorg-server"
 		"xorg-xinit"
 		"xorg-xset"
+		"feh"         # background
 	)
 	installPkgs "${listPkgs[@]}"
 
@@ -90,10 +131,84 @@ personalPkgs(){
 
 }
 
+
+startServices() {
+	logo "Enable and start services"
+
+	local -a services=(
+		"NetworkManager"
+	)
+
+	for src in "${services[@]}"; do
+		if sudo systemctl enable --now $src &>> log; then
+			echo "[OK]: Enable and start service $src"
+		else
+			echo "[FAIL]: Enable and start service $src"
+		fi
+
+	done
+
+	echo -e "\nPress any key to continue..."
+	read
+}
+
+
+installFonts() {
+	logo "Fonts install"
+
+	local coreDir="$HOME/.local/share/fonts"
+
+	local fontMesloLGS=(
+		"MesloLGS-NF"
+		"https://raw.githubusercontent.com/romkatv/powerlevel10k-media/master/MesloLGS%20NF%20Regular.ttf"
+		"https://raw.githubusercontent.com/romkatv/powerlevel10k-media/master/MesloLGS%20NF%20Bold.ttf"
+		"https://raw.githubusercontent.com/romkatv/powerlevel10k-media/master/MesloLGS%20NF%20Italic.ttf" 
+		"https://raw.githubusercontent.com/romkatv/powerlevel10k-media/master/MesloLGS%20NF%20Bold%20Italic.ttf"
+	)
+
+
+	if mkdir -p $coreDir &>> log; then
+		echo "[OK]: Font core dir create"
+	else
+		echo "[FAIL]: Font core dir create"
+		exit 1
+	fi
+
+	# font 0
+	if fc-list | grep -qi "MesloLGS NF"; then
+		echo "[OK]: MesloLGS NF already installed"
+   	else
+		mkdir -p "$coreDir/${fontMesloLGS[0]}"
+		for font in "${fontMesloLGS[@]:1}"; do
+    			if wget -P "$coreDir/${fontMesloLGS[0]}" "$font" &>> log; then
+       	 			echo "[OK]: $font"
+    			else
+        			echo "[FAIL]: $font"
+				exit 1
+    			fi
+		done
+	fi
+
+	# finish
+    	if fc-cache -fv &>> log; then
+        	echo "[OK]: Font cache updated"
+    	else
+        	echo "[FAIL]: Font cache update"
+        	exit 1
+    	fi
+
+	echo -e "\nPress any key to continue..."
+	read
+}
+
+
 main(){
+	createStdDir
 	systemPkgs
 	personalPkgs
-	return 0
+	startServices
+	installFonts
+	exit 0
 }
 
 main

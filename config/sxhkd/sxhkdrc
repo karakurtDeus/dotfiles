@@ -18,6 +18,10 @@ super + Escape
 # bspwm hotkeys
 #
 
+# file manager
+super + e
+	thunar
+
 # quit/restart bspwm
 super + alt + {q,r}
 	bspc {quit,wm -r}
