@@ -94,8 +94,6 @@ systemPkgs(){
 		"wireplumber"
 		"pipewire-pulse"
 		"pipewire-alsa"
-		"pipewire-jack"
-		"pavucontrol"
 
 		# bar
 		"polybar"
@@ -123,6 +121,7 @@ personalPkgs(){
 	local listPkgs=(
 		"keepassxc"
 		"telegram-desktop"
+		"discord"
 	)
 	installPkgs "${listPkgs[@]}"
 
