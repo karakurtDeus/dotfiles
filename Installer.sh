@@ -33,12 +33,12 @@ installPkgs(){
 
 	for pkg in "${listPkgs[@]}"; do
 		if sudo pacman -Q $pkg &>> log; then
-			echo "[OK] $pkg was already installed"
+			echo "[OK]: $pkg was already installed"
 		else
 			if sudo pacman -S $pkg --noconfirm &>> log; then
-				echo "[OK] $pkg installed"
+				echo "[OK]: $pkg installed"
 			else
-				echo "[FAIL] $pkg installed"
+				echo "[FAIL]: $pkg installed"
 				exit 1
 			fi
 		fi
@@ -48,6 +48,13 @@ installPkgs(){
 
 systemPkgs(){
 	logo "Install system package"
+
+	if sudo pacman -Syu &>> log; then
+		echo "[OK]: update pkg"
+	else
+		echo "[FAIL]: update pkg"
+		exit 1
+	fi
 
 	local listPkgs=(
 		# fonts
@@ -95,6 +102,9 @@ systemPkgs(){
 		"pipewire-pulse"
 		"pipewire-alsa"
 
+		# benchmark
+		"btop"
+
 		# bar
 		"polybar"
 
@@ -115,15 +125,48 @@ systemPkgs(){
 	read
 }
 
+enableMultilib() {
+	logo "Enable multilib"
+
+	if grep -q '^\[multilib\]' /etc/pacman.conf; then
+		echo "[OK]: multilib"
+	else
+		if sudo sed -i '/^#\[multilib\]/,/^#Include = \/etc\/pacman\.d\/mirrorlist/s/^#//' /etc/pacman.conf; then
+			echo "[OK]: add multilib"
+		else
+			echo "[FAIL]: add multilib"
+		fi
+	fi
+
+	if sudo pacman -Syu &>> log; then
+		echo "[OK]: update pkg"
+	else
+		echo "[FAIL]: update pkg"
+		exit 1
+	fi
+
+	echo -e "\nPress any key to continue..."
+	read
+}
+
 personalPkgs(){
 	logo "Install personal package"
 
-	local listPkgs=(
-		"keepassxc"
-		"telegram-desktop"
-		"discord"
-	)
-	installPkgs "${listPkgs[@]}"
+	read -r -p "Install karakurt personal package (y/n)? "  answer
+
+	case $answer in 
+		"y" | "yes" | "YES" | "Y")
+
+			local listPkgs=(
+				"keepassxc"
+				"telegram-desktop"
+				"discord"
+			)
+			installPkgs "${listPkgs[@]}"
+			;;
+		*)
+			;;
+	esac
 
 	echo -e "\nPress any key to continue..."
 	read
@@ -200,13 +243,37 @@ installFonts() {
 	read
 }
 
+nvidiaPkgs() {
+	logo "Install nvidia package"
+
+	read -r -p "Do you have an Nvidia gpu (y/n)? "  answer
+
+	case $answer in
+		"y" | "yes" | "YES" | "Y")
+			local listPkgs=(
+				"linux-headers"
+				"nvidia-dkms"
+				"nvidia-utils"
+				"lib32-nvidia-utils"
+			)
+			installPkgs "${listPkgs[@]}"
+			;;
+		*)
+			;;
+	esac
+
+	echo -e "\nPress any key to continue..."
+	read
+}
 
 main(){
 	createStdDir
 	systemPkgs
+	enableMultilib
 	personalPkgs
 	startServices
 	installFonts
+	nvidiaPkgs
 	exit 0
 }
 
