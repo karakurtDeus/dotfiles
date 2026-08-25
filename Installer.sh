@@ -67,9 +67,10 @@ systemPkgs(){
 		"vim"
 		"neovim"
 
-		# version control
+		# version control / build
 		"git"
 		"openssh"
+		"base-devel"
 
 		# terminal
 		"kitty"
@@ -268,31 +269,36 @@ nvidiaPkgs() {
 installYay() {
 	logo "Install yay"
 
-	temp_dir="/tmp/yay"
+	local temp_dir="/tmp/yay"
 
-	if ! pacman -Q yay > /dev/null 2>&1; then
-		if [ ! -d $temp_dir ]; then
-			if git clone https://aur.archlinux.org/yay.git $temp_dir >> log 2>&1; then
-				echo "[OK]: clone yay"
-			else
-				echo "[FAIL]: clone yay"
-				exit 1
-			fi
-		else
-			echo "[OK]: clone yay"
-		fi
-	
-		cd $temp_dir 
-	
-		if makepkg -si --noconfirm >> log 2>&1; then
-			echo "[OK]: build yay"
-		else
-			echo "[FAIL]: build yay"
-			exit 1
-		fi
-	else
+	if pacman -Q yay &>/dev/null; then
 		echo "[OK]: pkg yay is installed"
+
+		echo -e "\nPress any key to continue..."
+		read
+		return
 	fi
+
+	rm -rf "$temp_dir"
+
+	if git clone https://aur.archlinux.org/yay.git "$temp_dir" &>> log; then
+		echo "[OK]: clone yay"
+	else
+		echo "[FAIL]: clone yay"
+		exit 1
+	fi
+
+	if (
+		cd "$temp_dir" || exit 1
+		makepkg -si --noconfirm
+	) &>> log; then
+		echo "[OK]: build yay"
+	else
+		echo "[FAIL]: build yay"
+		exit 1
+	fi
+
+	rm -rf "$temp_dir"
 
 	echo -e "\nPress any key to continue..."
 	read
