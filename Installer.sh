@@ -46,6 +46,24 @@ installPkgs(){
 	done
 }
 
+installYayPkgs(){
+	local -a listPkgs=("${@}")
+
+	for pkg in "${listPkgs[@]}"; do
+		if yay -Q $pkg &>> log; then
+			echo "[OK]: $pkg was already installed"
+		else
+			if yay -S $pkg --noconfirm &>> log; then
+				echo "[OK]: $pkg installed"
+			else
+				echo "[FAIL]: $pkg installed"
+				exit 1
+			fi
+		fi
+
+	done
+}
+
 systemPkgs(){
 	logo "Install system package"
 
@@ -111,6 +129,7 @@ systemPkgs(){
 
 		# WM manager and other tools
 		"bspwm"
+		"picom"
 		"sxhkd"
 		"xorg-server"
 		"xorg-xinit"
@@ -167,6 +186,10 @@ personalPkgs(){
 				"steam"
 			)
 			installPkgs "${listPkgs[@]}"
+			local listPkgs=(
+				"cursor-bin"
+			)
+			installYayPkgs "${listPkgs[@]}"
 			;;
 		*)
 			;;
