@@ -12,7 +12,7 @@ logo() {
 	fi
 }
 
-createStdDir(){
+createStdDir() {
 	local listDirs=(
 		"Documents"
 		"Downloads"
@@ -23,19 +23,19 @@ createStdDir(){
 	)
 
 	for dir in "${listDirs[@]}"; do
-		mkdir -p $HOME/$dir &>> log
+		mkdir -p $HOME/$dir &>>log
 	done
 
 }
 
-installPkgs(){
+installPkgs() {
 	local -a listPkgs=("${@}")
 
 	for pkg in "${listPkgs[@]}"; do
-		if sudo pacman -Q $pkg &>> log; then
+		if sudo pacman -Q $pkg &>>log; then
 			echo "[OK]: $pkg was already installed"
 		else
-			if sudo pacman -S $pkg --noconfirm &>> log; then
+			if sudo pacman -S $pkg --noconfirm &>>log; then
 				echo "[OK]: $pkg installed"
 			else
 				echo "[FAIL]: $pkg installed"
@@ -46,14 +46,14 @@ installPkgs(){
 	done
 }
 
-installYayPkgs(){
+installYayPkgs() {
 	local -a listPkgs=("${@}")
 
 	for pkg in "${listPkgs[@]}"; do
-		if yay -Q $pkg &>> log; then
+		if yay -Q $pkg &>>log; then
 			echo "[OK]: $pkg was already installed"
 		else
-			if yay -S $pkg --noconfirm &>> log; then
+			if yay -S $pkg --noconfirm &>>log; then
 				echo "[OK]: $pkg installed"
 			else
 				echo "[FAIL]: $pkg installed"
@@ -64,7 +64,7 @@ installYayPkgs(){
 	done
 }
 
-systemPkgs(){
+systemPkgs() {
 	logo "Install system package"
 
 	local listPkgs=(
@@ -134,7 +134,7 @@ systemPkgs(){
 		"xorg-server"
 		"xorg-xinit"
 		"xorg-xset"
-		"feh"         # background
+		"feh" # background
 	)
 	installPkgs "${listPkgs[@]}"
 
@@ -155,7 +155,7 @@ enableMultilib() {
 		fi
 	fi
 
-	if sudo pacman -Syu --noconfirm &>> log; then
+	if sudo pacman -Syu --noconfirm &>>log; then
 		echo "[OK]: update pkg"
 	else
 		echo "[FAIL]: update pkg"
@@ -166,40 +166,39 @@ enableMultilib() {
 	read
 }
 
-personalPkgs(){
+personalPkgs() {
 	logo "Install personal package"
 
-	read -r -p "Install karakurt personal package (y/n)? "  answer
+	read -r -p "Install karakurt personal package (y/n)? " answer
 
-	case $answer in 
-		"y" | "yes" | "YES" | "Y")
+	case $answer in
+	"y" | "yes" | "YES" | "Y")
 
-			local listPkgs=(
-				"keepassxc"
-				"telegram-desktop"
-				"obsidian"
-				"discord"
-				"anki"
-				"espeak-ng"
-        			"speech-dispatcher"
-        			"mpv"
-				"steam"
-			)
-			installPkgs "${listPkgs[@]}"
-			local listPkgs=(
-				"cursor-bin"
-			)
-			installYayPkgs "${listPkgs[@]}"
-			;;
-		*)
-			;;
+		local listPkgs=(
+			"keepassxc"
+			"telegram-desktop"
+			"obsidian"
+			"discord"
+			"anki"
+			"espeak-ng"
+			"speech-dispatcher"
+			"mpv"
+			"steam"
+		)
+		installPkgs "${listPkgs[@]}"
+		local listPkgs=(
+			"cursor-bin"
+		)
+		installYayPkgs "${listPkgs[@]}"
+		;;
+	*)
+		;;
 	esac
 
 	echo -e "\nPress any key to continue..."
 	read
 
 }
-
 
 startServices() {
 	logo "Enable and start services"
@@ -209,7 +208,7 @@ startServices() {
 	)
 
 	for src in "${services[@]}"; do
-		if sudo systemctl enable --now $src &>> log; then
+		if sudo systemctl enable --now $src &>>log; then
 			echo "[OK]: Enable and start service $src"
 		else
 			echo "[FAIL]: Enable and start service $src"
@@ -221,7 +220,6 @@ startServices() {
 	read
 }
 
-
 installFonts() {
 	logo "Fonts install"
 
@@ -231,12 +229,11 @@ installFonts() {
 		"MesloLGS-NF"
 		"https://raw.githubusercontent.com/romkatv/powerlevel10k-media/master/MesloLGS%20NF%20Regular.ttf"
 		"https://raw.githubusercontent.com/romkatv/powerlevel10k-media/master/MesloLGS%20NF%20Bold.ttf"
-		"https://raw.githubusercontent.com/romkatv/powerlevel10k-media/master/MesloLGS%20NF%20Italic.ttf" 
+		"https://raw.githubusercontent.com/romkatv/powerlevel10k-media/master/MesloLGS%20NF%20Italic.ttf"
 		"https://raw.githubusercontent.com/romkatv/powerlevel10k-media/master/MesloLGS%20NF%20Bold%20Italic.ttf"
 	)
 
-
-	if mkdir -p $coreDir &>> log; then
+	if mkdir -p $coreDir &>>log; then
 		echo "[OK]: Font core dir create"
 	else
 		echo "[FAIL]: Font core dir create"
@@ -246,25 +243,25 @@ installFonts() {
 	# font 0
 	if fc-list | grep -qi "MesloLGS NF"; then
 		echo "[OK]: MesloLGS NF already installed"
-   	else
+	else
 		mkdir -p "$coreDir/${fontMesloLGS[0]}"
 		for font in "${fontMesloLGS[@]:1}"; do
-    			if wget -P "$coreDir/${fontMesloLGS[0]}" "$font" &>> log; then
-       	 			echo "[OK]: $font"
-    			else
-        			echo "[FAIL]: $font"
+			if wget -P "$coreDir/${fontMesloLGS[0]}" "$font" &>>log; then
+				echo "[OK]: $font"
+			else
+				echo "[FAIL]: $font"
 				exit 1
-    			fi
+			fi
 		done
 	fi
 
 	# finish
-    	if fc-cache -fv &>> log; then
-        	echo "[OK]: Font cache updated"
-    	else
-        	echo "[FAIL]: Font cache update"
-        	exit 1
-    	fi
+	if fc-cache -fv &>>log; then
+		echo "[OK]: Font cache updated"
+	else
+		echo "[FAIL]: Font cache update"
+		exit 1
+	fi
 
 	echo -e "\nPress any key to continue..."
 	read
@@ -273,20 +270,20 @@ installFonts() {
 nvidiaPkgs() {
 	logo "Install nvidia package"
 
-	read -r -p "Do you have an Nvidia gpu (y/n)? "  answer
+	read -r -p "Do you have an Nvidia gpu (y/n)? " answer
 
 	case $answer in
-		"y" | "yes" | "YES" | "Y")
-			local listPkgs=(
-				"linux-headers"
-				"nvidia-dkms"
-				"nvidia-utils"
-				"lib32-nvidia-utils"
-			)
-			installPkgs "${listPkgs[@]}"
-			;;
-		*)
-			;;
+	"y" | "yes" | "YES" | "Y")
+		local listPkgs=(
+			"linux-headers"
+			"nvidia-dkms"
+			"nvidia-utils"
+			"lib32-nvidia-utils"
+		)
+		installPkgs "${listPkgs[@]}"
+		;;
+	*)
+		;;
 	esac
 
 	echo -e "\nPress any key to continue..."
@@ -308,7 +305,7 @@ installYay() {
 
 	rm -rf "$temp_dir"
 
-	if git clone https://aur.archlinux.org/yay.git "$temp_dir" &>> log; then
+	if git clone https://aur.archlinux.org/yay.git "$temp_dir" &>>log; then
 		echo "[OK]: clone yay"
 	else
 		echo "[FAIL]: clone yay"
@@ -318,7 +315,7 @@ installYay() {
 	if (
 		cd "$temp_dir" || exit 1
 		makepkg -si --noconfirm
-	) &>> log; then
+	) &>>log; then
 		echo "[OK]: build yay"
 	else
 		echo "[FAIL]: build yay"
@@ -331,7 +328,27 @@ installYay() {
 	read
 }
 
-main(){
+installLazyvim() {
+	logo "Install LazyVim"
+
+	local nvim_dir="$HOME/.config/nvim"
+
+	if [ -d "$nvim_dir" ]; then
+		echo "[OK]: LazyVim already installed"
+	else
+		if git clone https://github.com/LazyVim/starter.git "$nvim_dir" >/dev/null 2>&1; then
+			rm -rf "$nvim_dir/.git"
+			echo "[OK]: install LazyVim"
+		else
+			echo "[FAIL]: install LazyVim"
+		fi
+	fi
+
+	echo -e "\nPress any key to continue..."
+	read
+}
+
+main() {
 	createStdDir
 	systemPkgs
 	enableMultilib
@@ -340,6 +357,7 @@ main(){
 	startServices
 	installFonts
 	nvidiaPkgs
+	installLazyvim
 	exit 0
 }
 
