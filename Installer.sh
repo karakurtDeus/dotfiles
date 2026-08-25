@@ -160,6 +160,10 @@ personalPkgs(){
 				"telegram-desktop"
 				"obsidian"
 				"discord"
+				"anki"
+				"espeak-ng"
+        			"speech-dispatcher"
+        			"mpv"
 				"steam"
 			)
 			installPkgs "${listPkgs[@]}"
