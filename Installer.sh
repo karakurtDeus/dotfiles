@@ -141,6 +141,7 @@ systemPkgs() {
 
     # WM manager and other tools
     "bspwm"
+    "pacman-contrib"
     "picom"
     "sxhkd"
     "xorg-server"
