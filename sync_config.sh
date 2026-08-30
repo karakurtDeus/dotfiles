@@ -11,6 +11,7 @@ cp -R ~/.config/gtk-3.0 config
 cp -R ~/.config/gtk-4.0 config
 cp -R ~/.config/xdg-desktop-portal config
 cp -R ~/.config/dconf config
+cp -R ~/.config/dunst config
 
 rm -R home
 mkdir home

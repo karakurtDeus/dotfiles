@@ -114,6 +114,10 @@ systemPkgs() {
     "pipewire-pulse"
     "pipewire-alsa"
 
+    # copy / paste
+    "xclip"
+    "xsel"
+
     # shell
     "btop"
     "zsh"
@@ -131,6 +135,10 @@ systemPkgs() {
 
     # bar
     "polybar"
+
+    # git
+    "git"
+    "less"
 
     # notification
     "dunst"
@@ -195,6 +203,8 @@ personalPkgs() {
       "anki"
       "espeak-ng"
       "speech-dispatcher"
+      "signal-desktop"
+      "wireguard-tools"
       "mpv"
       "steam"
     )
