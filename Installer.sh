@@ -133,6 +133,9 @@ systemPkgs() {
     "fd"
     "ripgrep"
 
+    # firewall
+    "ufw"
+
     # bar
     "polybar"
 
@@ -371,6 +374,43 @@ installLazyvim() {
   read
 }
 
+ufwConfig() {
+  logo "UFW config"
+
+  if sudo ufw default deny incoming >/dev/null 2>&1; then
+    printf "[OK]: ufw rule deny incoming\n"
+  else
+    printf "[FAIL]: ufw rule deny incoming\n"
+    exit 1
+  fi
+
+  if sudo ufw default allow outgoing >/dev/null 2>&1; then
+    printf "[OK]: ufw rule allow outgoing\n"
+  else
+    printf "[FAIL]: ufw rule allow outgoing\n"
+    exit 1
+  fi
+
+  enable_output=$(sudo ufw --force enable 2>&1) || enable_status=$?
+  enable_status=${enable_status:-0}
+
+  if [ "$enable_status" -eq 0 ]; then
+    printf "[OK]: ufw enabled\n"
+  else
+    printf "[FAIL]: ufw enable\n"
+    [ -n "$enable_output" ] && printf "%s\n" "$enable_output"
+  fi
+
+  if sudo systemctl enable ufw.service >/dev/null 2>&1; then
+    printf "[OK]: ufw service enabled\n"
+  else
+    printf "[FAIL]: ufw service enable\n"
+  fi
+
+  echo -e "\nPress any key to continue..."
+  read
+}
+
 main() {
   createStdDir
   systemPkgs
@@ -381,6 +421,7 @@ main() {
   installFonts
   nvidiaPkgs
   installLazyvim
+  ufwConfig
   exit 0
 }
 
