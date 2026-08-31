@@ -281,6 +281,24 @@ installFonts() {
     done
   fi
 
+  # font 1
+  local fontPressStart2P=(
+    "PressStart2P"
+    "https://raw.githubusercontent.com/google/fonts/main/ofl/pressstart2p/PressStart2P-Regular.ttf"
+  )
+
+  if fc-list | grep -qi "Press Start 2P"; then
+    echo "[OK]: Press Start 2P already installed"
+  else
+    mkdir -p "$coreDir/${fontPressStart2P[0]}"
+    if wget -P "$coreDir/${fontPressStart2P[0]}" "${fontPressStart2P[1]}" &>>log; then
+      echo "[OK]: Press Start 2P"
+    else
+      echo "[FAIL]: Press Start 2P"
+      exit 1
+    fi
+  fi
+
   # finish
   if fc-cache -fv &>>log; then
     echo "[OK]: Font cache updated"
