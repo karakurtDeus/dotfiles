@@ -29,7 +29,7 @@ copyConfig() {
   fi
 
   for dir in "${listConfigDirs[@]}"; do
-    if cp -R $HOME/.config/$dir &>>log; then
+    if cp -R $HOME/.config/$dir ./config &>>log; then
       echo "[OK]: $dir copy"
     else
       echo "[FAIL]: $dir copy"
