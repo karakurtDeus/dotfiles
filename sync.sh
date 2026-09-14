@@ -13,7 +13,11 @@ listConfigDirs=(
   "kitty"
 )
 
-xinitrc=("$HOME/.xinitrc")
+listHomeFiles=(
+  ".xinitrc"
+  ".zshrc"
+  ".p10k.zsh"
+)
 
 copyConfig() {
   if rm -R ./config &>>log; then
@@ -51,12 +55,14 @@ copyConfig() {
     exit 1
   fi
 
-  if cp -R $xinitrc ./home &>>log; then
-    echo "[OK] cp -R xinitrc"
-  else
-    echo "[FAIL] cp -R xinitrc"
-    exit 1
-  fi
+  for file in "${listHomeFiles[@]}"; do
+    if cp "$HOME/$file" ./home &>>log; then
+      echo "[OK]: $file copy"
+    else
+      echo "[FAIL]: $file copy"
+      exit 1
+    fi
+  done
 }
 
 updateConfig() {
@@ -78,18 +84,23 @@ updateConfig() {
     fi
   done
 
-  if rm -R $xinitrc || true &>>log; then
-    echo "[OK] rm old xinitrc"
-    if cp -R ./home/.xinitrc $xinitrc &>>log; then
-      echo "[OK] cp xinitrc"
+  for file in "${listHomeFiles[@]}"; do
+    if rm "$HOME/$file" || true &>>log; then
+      echo "[OK]: rm old $file"
     else
-      echo "[FAIL] cp xinitrc"
+      echo "[FAIL]: rm old $file"
       exit 1
     fi
-  else
-    echo "[FAIL] rm old xinitrc"
-    exit 1
-  fi
+  done
+
+  for file in "${listHomeFiles[@]}"; do
+    if cp "./home/$file" "$HOME/$file" &>>log; then
+      echo "[OK]: cp new $file"
+    else
+      echo "[FAIL]: cp new $file"
+      exit 1
+    fi
+  done
 }
 
 case "$1" in

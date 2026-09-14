@@ -374,6 +374,70 @@ installYay() {
   read
 }
 
+zshConfig() {
+  logo "ZSH config"
+
+  if sudo chsh -s /bin/zsh "$USER" >/dev/null 2>&1; then
+    echo "[OK]: zsh set as default shell"
+  else
+    echo "[FAIL]: zsh set as default shell"
+  fi
+
+  if mkdir -p "$HOME/.config/zsh/plugins" &>>log; then
+    echo "[OK]: zsh directory created"
+  else
+    echo "[FAIL]: zsh directory created"
+  fi
+
+  local repos=(
+    "https://github.com/zsh-users/zsh-autosuggestions.git|plugins/zsh-autosuggestions"
+    "https://github.com/zsh-users/zsh-syntax-highlighting.git|plugins/zsh-syntax-highlighting"
+    "https://github.com/romkatv/powerlevel10k.git|powerlevel10k"
+  )
+
+  for item in "${repos[@]}"; do
+    repo="${item%%|*}"
+    target="${item##*|}"
+    dest="$HOME/.config/zsh/$target"
+
+    if [ -d "$dest/.git" ]; then
+      echo "[OK]: $target already exists"
+      continue
+    fi
+
+    if git clone "$repo" "$dest" &>>log; then
+      echo "[OK]: $target cloned"
+    else
+      echo "[FAIL]: clone $repo"
+    fi
+  done
+
+  local dir
+  dir="$(dirname "$(realpath "$0")")"
+
+  local shellFiles=(
+    ".zshrc"
+    ".p10k.zsh"
+  )
+
+  for file in "${shellFiles[@]}"; do
+    if rm "$HOME/$file" >/dev/null 2>&1; then
+      echo "[OK]: rm old $file"
+    else
+      echo "[OK]: old $file empty"
+    fi
+
+    if cp "$dir/home/$file" "$HOME/$file"; then
+      echo "[OK]: paste $file"
+    else
+      echo "[FAIL]: paste $file"
+    fi
+  done
+
+  echo -e "\nPress any key to continue..."
+  read
+}
+
 installLazyvim() {
   logo "Install LazyVim"
 
@@ -440,6 +504,7 @@ main() {
   startServices
   installFonts
   nvidiaPkgs
+  zshConfig
   installLazyvim
   ufwConfig
   exit 0
