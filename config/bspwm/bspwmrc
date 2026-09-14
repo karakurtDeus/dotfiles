@@ -37,6 +37,9 @@ pgrep -x picom >/dev/null || picom --config "$HOME/.config/picom/picom.conf" &
 pkill dunst
 dunst &
 
+# buffer
+pgrep -x clipmenud >/dev/null || clipmenud &
+
 # screen shot
 pgrep -x flameshot >/dev/null || flameshot &
 

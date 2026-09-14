@@ -117,6 +117,8 @@ systemPkgs() {
     # copy / paste
     "xclip"
     "xsel"
+    "clipmenu"
+    "clipnotify"
 
     # shell
     "btop"

@@ -22,6 +22,10 @@ super + Escape
 super + e
 	thunar
 
+# buffer
+super + v
+  CM_LAUNCHER=rofi clipmenu -config "$HOME/.config/bspwm/rofi/drun.rasi" -p "buf"
+
 # quit/restart bspwm
 super + alt + {q,r}
 	bspc {quit,wm -r}

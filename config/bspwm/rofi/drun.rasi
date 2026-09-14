@@ -167,7 +167,7 @@ configuration {
     sorting-method:    "name";
   }
 
-  display-drun: "run";
+  display-drun: "app";
   drun-display-format: "{name}";
 }
 
