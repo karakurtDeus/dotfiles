@@ -11,6 +11,7 @@ listConfigDirs=(
   "dconf"
   "dunst"
   "kitty"
+  "xfce4"
 )
 
 listHomeFiles=(

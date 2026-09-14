@@ -454,6 +454,25 @@ installLazyvim() {
     fi
   fi
 
+  if cat >"$nvim_dir/lua/plugins/snacks.lua" <<'EOF'
+return {
+  "folke/snacks.nvim",
+  opts = {
+    picker = {
+      sources = {
+        explorer = { hidden = true },
+        files = { hidden = true },
+      },
+    },
+  },
+}
+EOF
+  then
+    echo "[OK]: snacks hidden files"
+  else
+    echo "[FAIL]: snacks hidden files"
+  fi
+
   echo -e "\nPress any key to continue..."
   read
 }
