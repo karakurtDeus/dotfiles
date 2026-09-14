@@ -26,6 +26,10 @@ super + e
 super + v
   CM_LAUNCHER=rofi clipmenu -config "$HOME/.config/bspwm/rofi/drun.rasi" -p "buf"
 
+# lockscreen
+ctrl + super + p
+  ~/.config/bspwm/bin/powermenu.sh
+
 # quit/restart bspwm
 super + alt + {q,r}
 	bspc {quit,wm -r}
