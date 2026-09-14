@@ -152,6 +152,9 @@ systemPkgs() {
     "xdg-desktop-portal"
     "xdg-desktop-portal-gtk"
 
+    # lockscreen
+    "xorg-xdpyinfo"
+
     # WM manager and other tools
     "bspwm"
     "pacman-contrib"
@@ -374,6 +377,18 @@ installYay() {
   read
 }
 
+installYayPkgsStd() {
+  logo "Yay std pkgs"
+
+  listPkgs=(
+    "i3lock-color"
+  )
+  installYayPkgs "${listPkgs[@]}"
+
+  echo -e "\nPress any key to continue..."
+  read
+}
+
 zshConfig() {
   logo "ZSH config"
 
@@ -454,7 +469,7 @@ installLazyvim() {
     fi
   fi
 
-  if cat >"$nvim_dir/lua/plugins/snacks.lua" <<'EOF'
+  if cat >"$nvim_dir/lua/plugins/snacks.lua" <<'EOF'; then
 return {
   "folke/snacks.nvim",
   opts = {
@@ -467,7 +482,6 @@ return {
   },
 }
 EOF
-  then
     echo "[OK]: snacks hidden files"
   else
     echo "[FAIL]: snacks hidden files"
@@ -519,6 +533,7 @@ main() {
   systemPkgs
   enableMultilib
   installYay
+  installYayPkgsStd
   personalPkgs
   startServices
   installFonts
