@@ -10,6 +10,7 @@ listConfigDirs=(
   "xdg-desktop-portal"
   "dconf"
   "dunst"
+  "kitty"
 )
 
 xinitrc=("$HOME/.xinitrc")
