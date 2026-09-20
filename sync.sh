@@ -10,6 +10,7 @@ listConfigDirs=(
   "xdg-desktop-portal"
   "dconf"
   "dunst"
+  "yazi"
   "kitty"
   "xfce4"
 )

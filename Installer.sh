@@ -212,6 +212,8 @@ personalPkgs() {
       "espeak-ng"
       "speech-dispatcher"
       "signal-desktop"
+      "kdenlive"
+      "obs-studio"
       "wireguard-tools"
       "mpv"
       "steam"
