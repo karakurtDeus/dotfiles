@@ -13,6 +13,7 @@ listConfigDirs=(
   "yazi"
   "kitty"
   "xfce4"
+  "fontconfig"
 )
 
 listHomeFiles=(
