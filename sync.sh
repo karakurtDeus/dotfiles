@@ -14,6 +14,7 @@ listConfigDirs=(
   "kitty"
   "xfce4"
   "fontconfig"
+  "picom"
 )
 
 listHomeFiles=(

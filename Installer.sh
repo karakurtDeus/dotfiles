@@ -384,6 +384,7 @@ installYayPkgsStd() {
 
   listPkgs=(
     "i3lock-color"
+    "qogir-cursor-theme"
   )
   installYayPkgs "${listPkgs[@]}"
 
