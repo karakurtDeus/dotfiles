@@ -489,6 +489,17 @@ EOF
     echo "[FAIL]: snacks hidden files"
   fi
 
+  local lazyvim_json="$nvim_dir/lazyvim.json"
+
+  if [ -f "$lazyvim_json" ] && jq --arg extra "lazyvim.plugins.extras.util.mini-hipatterns" '
+      .extras += [$extra]
+      | .extras |= unique
+    ' "$lazyvim_json" >"$lazyvim_json.tmp" && mv "$lazyvim_json.tmp" "$lazyvim_json"; then
+    echo "[OK]: lazyvim extra mini-hipatterns"
+  else
+    echo "[FAIL]: lazyvim extra mini-hipatterns"
+  fi
+
   echo -e "\nPress any key to continue..."
   read
 }

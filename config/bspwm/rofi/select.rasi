@@ -6,10 +6,10 @@ configuration {
 }
 
 * {
-    main-bg: #2a1f3d;
-    main-fg: #f4e8c1;
-    select-bg: #f4e8c1;
-    select-fg: #2a1f3d;
+    main-bg: #000000;
+    inactive-bg: #C5C8C6;
+    select-bg: #F0C674;
+    icon-fg: #000000;
 }
 
 window {
@@ -22,14 +22,16 @@ window {
     padding:                     0px;
     border:                      0px;
     border-radius:               0px;
-    border-color:                transparent;
-    background-color:            transparent;
+    border-color:                @main-bg;
+    background-color:            @main-bg;
 }
 
 mainbox {
     enabled:                     true;
     children:                    [ "listview" ];
     background-color:            @main-bg;
+    border:                      0px;
+    border-color:                @main-bg;
 }
 
 listview {
@@ -46,34 +48,47 @@ listview {
     fixed-height:                true;
     fixed-columns:               true;
     cursor:                      "default";
-    background-color:            transparent;
-    text-color:                  @main-fg;
+    background-color:            @main-bg;
+    text-color:                  @icon-fg;
+    border:                      0px;
+    border-color:                @main-bg;
 }
 
-element {
+element,
+element normal.normal,
+element alternate.normal {
     enabled:                     true;
     orientation:                 vertical;
     children:                    [ "element-icon", "element-text" ];
     spacing:                     0px;
     padding:                     7px;
+    border:                      0px;
     border-radius:               20px;
+    border-color:                @inactive-bg;
     cursor:                      pointer;
-    background-color:            transparent;
-    text-color:                  @main-fg;
+    background-color:            @inactive-bg;
+    text-color:                  @icon-fg;
 }
 
-element selected.normal {
+element selected,
+element selected.normal,
+element selected.active,
+element selected.urgent {
     background-color:            @select-bg;
-    text-color:                  @select-fg;
+    text-color:                  @icon-fg;
+    border:                      0px;
+    border-color:                @select-bg;
 }
 
 element-icon {
     size:                        33%;
     cursor:                      inherit;
+    border:                      0px;
     border-radius:               20px;
+    border-color:                transparent;
     background-color:            transparent;
     margin:                      1px;
-    text-color:                  inherit;
+    text-color:                  @icon-fg;
     horizontal-align:            0.5;
     expand:                      false;
 }
@@ -84,6 +99,7 @@ element-text {
     padding:                     5px 0px 0px 0px;
     cursor:                      inherit;
     background-color:            transparent;
-    text-color:                  inherit;
+    text-color:                  @icon-fg;
+    highlight:                   none;
     expand:                      true;
 }
