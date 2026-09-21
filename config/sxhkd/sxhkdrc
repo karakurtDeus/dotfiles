@@ -27,7 +27,7 @@ super + v
   CM_LAUNCHER=rofi clipmenu -config "$HOME/.config/bspwm/rofi/drun.rasi" -p "buf"
 
 # wallpaper selector
-super + alt + w
+super + ctrl + w
   ~/.config/bspwm/bin/wallpaper.sh
 
 # lockscreen
