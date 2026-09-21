@@ -3,6 +3,9 @@
 # color
 primary="#F0C674"
 
+# cursor
+xsetroot -xcf /usr/share/icons/Qogir-cursors/cursors/left_ptr 24
+
 pgrep -x sxhkd >/dev/null || sxhkd &
 
 bspc monitor -d I II III IV V VI

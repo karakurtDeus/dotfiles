@@ -21,6 +21,7 @@ listHomeFiles=(
   ".xinitrc"
   ".zshrc"
   ".p10k.zsh"
+  ".Xresources"
 )
 
 copyConfig() {

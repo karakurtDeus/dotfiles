@@ -157,6 +157,7 @@ systemPkgs() {
 
     # WM manager and other tools
     "bspwm"
+    "xorg-xsetroot"
     "pacman-contrib"
     "picom"
     "sxhkd"

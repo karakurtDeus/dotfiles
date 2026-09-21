@@ -5,12 +5,15 @@ export XDG_CURRENT_DESKTOP=bspwm
 export XDG_SESSION_DESKTOP=bspwm
 export GTK_THEME=Adwaita:dark
 export QT_QPA_PLATFORMTHEME=qt5ct
+export XCURSOR_THEME=Qogir-cursors
+export XCURSOR_SIZE=24
+xrdb -merge ~/.Xresources
 
-dconf load / < ~/.config/dconf/interface.conf
+dconf load / <~/.config/dconf/interface.conf
 
 dbus-update-activation-environment --systemd --all
 
-xset s off 
+xset s off
 xset -dpms
 
 exec bspwm
