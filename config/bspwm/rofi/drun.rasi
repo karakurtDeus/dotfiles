@@ -1,6 +1,6 @@
 configuration {
 /*	modes: "window,drun,run,ssh";*/
-/*	font: "mono 12";*/
+	font: "Liberation Sans 12";
 /*	location: 0;*/
 /*	yoffset: 0;*/
 /*	xoffset: 0;*/
@@ -167,7 +167,7 @@ configuration {
     sorting-method:    "name";
   }
 
-  display-drun: "app";
+  display-drun: "Choose app";
   drun-display-format: "{name}";
 }
 
@@ -176,6 +176,8 @@ configuration {
   fg: #C5C8C6;
   primary: #F0C674;
   disabled: #707880;
+  /* Fallback. Each hotkey overrides this with -theme-str. */
+  menu-title: "󱇪 Apps";
 
   background: var(bg);
   foreground: var(disabled);
@@ -214,5 +216,20 @@ window {
   width:  800px;
   height: 600px;
   border: 0;
+  border-radius: 16px;
+}
+
+mainbox {
+  children: [ "textbox-menu-header", "inputbar", "listview" ];
+}
+
+textbox-menu-header {
+  expand: false;
+  width: 100%;
+  content: var(menu-title);
+  horizontal-align: 0.5;
+  text-color: var(primary);
+  font: "Liberation Sans 12";
+  margin: 0px 0px 8px 0px;
 }
 
