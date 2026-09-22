@@ -6,9 +6,9 @@ configuration {
 }
 
 * {
-    main-bg: #000000;
-    inactive-bg: #C5C8C6;
-    select-bg: #F0C674;
+    bg: #000000;
+    fg: #C5C8C6;
+    primary: #F0C674;
     icon-fg: #000000;
 }
 
@@ -22,16 +22,16 @@ window {
     padding:                     0px;
     border:                      0px;
     border-radius:               0px;
-    border-color:                @main-bg;
-    background-color:            @main-bg;
+    border-color:                @bg;
+    background-color:            @bg;
 }
 
 mainbox {
     enabled:                     true;
     children:                    [ "listview" ];
-    background-color:            @main-bg;
+    background-color:            @bg;
     border:                      0px;
-    border-color:                @main-bg;
+    border-color:                @bg;
 }
 
 listview {
@@ -48,10 +48,10 @@ listview {
     fixed-height:                true;
     fixed-columns:               true;
     cursor:                      "default";
-    background-color:            @main-bg;
+    background-color:            @bg;
     text-color:                  @icon-fg;
     border:                      0px;
-    border-color:                @main-bg;
+    border-color:                @bg;
 }
 
 element,
@@ -64,9 +64,9 @@ element alternate.normal {
     padding:                     7px;
     border:                      0px;
     border-radius:               20px;
-    border-color:                @inactive-bg;
+    border-color:                @fg;
     cursor:                      pointer;
-    background-color:            @inactive-bg;
+    background-color:            @fg;
     text-color:                  @icon-fg;
 }
 
@@ -74,10 +74,10 @@ element selected,
 element selected.normal,
 element selected.active,
 element selected.urgent {
-    background-color:            @select-bg;
+    background-color:            @primary;
     text-color:                  @icon-fg;
     border:                      0px;
-    border-color:                @select-bg;
+    border-color:                @primary;
 }
 
 element-icon {

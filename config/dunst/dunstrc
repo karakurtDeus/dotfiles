@@ -362,7 +362,7 @@
     # Otherwise the "#" and following would be interpreted as a comment.
     # Wayland: #RRGGBBAA — non-zero alpha so Hyprland blur is visible
     background = "#000000"
-    foreground = "#00ff66"
+    foreground = "#32FF92"
     frame_color = "#000000"
     timeout = 10
     # Icon for notifications with low urgency
@@ -371,7 +371,7 @@
 [urgency_normal]
     background = "#000000"
     # foreground = "#ffffff"
-    foreground = "#3399ff"
+    foreground = "#3399FF"
     frame_color = "#000000"
     timeout = 10
     override_pause_level = 30
@@ -381,7 +381,7 @@
 [urgency_critical]
     background = "#000000"
     # foreground = "red"
-    foreground = "#ff3333"
+    foreground = "#FF3333"
     frame_color = "#000000"
     timeout = 10
     override_pause_level = 60
