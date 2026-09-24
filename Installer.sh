@@ -218,6 +218,9 @@ personalPkgs() {
       "wireguard-tools"
       "mpv"
       "steam"
+      "bluez"
+      "bluez-utils"
+      "bluetui"
     )
     installPkgs "${listPkgs[@]}"
     local listPkgs=(
@@ -239,6 +242,7 @@ startServices() {
 
   local -a services=(
     "NetworkManager"
+    "bluetooth"
   )
 
   for src in "${services[@]}"; do
