@@ -324,37 +324,6 @@ def colors_panel():
 
     imgui.separator()
 
-def cheatsheet_panel():
-    global color_terminal, picker_color, dunst_background_color
-
-    title = "Cheatsheet"
-    
-    avail = imgui.get_content_region_avail().x
-    text_width = imgui.calc_text_size(title).x
-    imgui.set_cursor_pos_x(imgui.get_cursor_pos_x() + (avail - text_width) * 0.5)
-    imgui.text(title)
-
-    imgui.separator()
-
-    accent = imgui.get_style_color_vec4(imgui.Col_.text_link)
-
-    rows = [
-        ("Network manager:", "nmtui"),
-        ("Bluethooth:", "bluetui"),
-        ("Audio:", "wpctl status && wpctl set-default <device>"),
-    ]
-    label_width = max(imgui.calc_text_size(label).x for label, _ in rows)
-    gap = imgui.calc_text_size("    ").x
-    origin_x = imgui.get_cursor_pos_x()
-
-    for label, value in rows:
-        imgui.text_colored(accent, label)
-        imgui.same_line()
-        imgui.set_cursor_pos_x(origin_x + label_width + gap)
-        imgui.text(str(value))
-
-
-
 
 # --------------------------
 # Application
@@ -383,7 +352,6 @@ def main():
     windows = [
         ("Control Panel", control_panel),
         ("Colors", colors_panel),
-        ("Cheatsheet", cheatsheet_panel),
     ]
 
     dockable_windows = []
