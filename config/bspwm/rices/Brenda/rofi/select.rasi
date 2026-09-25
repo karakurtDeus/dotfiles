@@ -15,7 +15,8 @@ configuration {
 window {
     enabled:                     true;
     fullscreen:                  false;
-    width:                       100%;
+    location:                    center;
+    anchor:                      center;
     transparency:                "real";
     cursor:                      "default";
     spacing:                     0px;
@@ -23,13 +24,13 @@ window {
     border:                      0px;
     border-radius:               0px;
     border-color:                @bg;
-    background-color:            @bg;
+    background-color:            #00000066;
 }
 
 mainbox {
     enabled:                     true;
     children:                    [ "listview" ];
-    background-color:            @bg;
+    background-color:            transparent;
     border:                      0px;
     border-color:                @bg;
 }
@@ -44,11 +45,12 @@ listview {
     dynamic:                     false;
     scrollbar:                   false;
     layout:                      vertical;
+    flow:                        horizontal;
     reverse:                     false;
     fixed-height:                true;
     fixed-columns:               true;
     cursor:                      "default";
-    background-color:            @bg;
+    background-color:            transparent;
     text-color:                  @icon-fg;
     border:                      0px;
     border-color:                @bg;
@@ -60,46 +62,58 @@ element alternate.normal {
     enabled:                     true;
     orientation:                 vertical;
     children:                    [ "element-icon", "element-text" ];
-    spacing:                     0px;
-    padding:                     7px;
+    spacing:                     8px;
+    padding:                     0px;
     border:                      0px;
-    border-radius:               20px;
-    border-color:                @fg;
+    border-radius:               0px;
     cursor:                      pointer;
-    background-color:            @fg;
-    text-color:                  @icon-fg;
+    background-color:            transparent;
+    text-color:                  @fg;
 }
 
 element selected,
 element selected.normal,
 element selected.active,
 element selected.urgent {
-    background-color:            @primary;
-    text-color:                  @icon-fg;
+    background-color:            transparent;
+    text-color:                  @primary;
     border:                      0px;
-    border-color:                @primary;
 }
 
 element-icon {
-    size:                        33%;
+    size:                        30%;
+    squared:                     false;
     cursor:                      inherit;
-    border:                      0px;
-    border-radius:               20px;
+    border:                      3px;
+    border-radius:               16px;
     border-color:                transparent;
     background-color:            transparent;
-    margin:                      1px;
-    text-color:                  @icon-fg;
     horizontal-align:            0.5;
+    vertical-align:              0.5;
     expand:                      false;
 }
 
+element-icon selected,
+element-icon selected.normal,
+element-icon selected.active,
+element-icon selected.urgent {
+    border-color:                @primary;
+}
+
 element-text {
-    vertical-align:              1.0;
+    vertical-align:              0.5;
     horizontal-align:            0.5;
-    padding:                     5px 0px 0px 0px;
+    padding:                     0px;
     cursor:                      inherit;
     background-color:            transparent;
-    text-color:                  @icon-fg;
+    text-color:                  @fg;
     highlight:                   none;
-    expand:                      true;
+    expand:                      false;
+}
+
+element-text selected,
+element-text selected.normal,
+element-text selected.active,
+element-text selected.urgent {
+    text-color:                  @primary;
 }

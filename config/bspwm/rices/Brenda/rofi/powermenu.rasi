@@ -1,0 +1,85 @@
+configuration {
+    show-icons:                  false;
+    font:                        "JetBrainsMono NF 22";
+}
+
+* {
+    bg: #000000;
+    fg: #C5C8C6;
+    primary: #F0C674;
+    muted: #707880;
+}
+
+window {
+    enabled:                     true;
+    fullscreen:                  true;
+    location:                    center;
+    anchor:                      center;
+    transparency:                "real";
+    cursor:                      "default";
+    spacing:                     0px;
+    padding:                     0px;
+    border:                      0px;
+    border-radius:               0px;
+    background-color:            #00000066;
+}
+
+mainbox {
+    enabled:                     true;
+    children:                    [ "listview" ];
+    background-color:            transparent;
+    border:                      0px;
+}
+
+listview {
+    enabled:                     true;
+    columns:                     4;
+    lines:                       1;
+    spacing:                     24px;
+    padding:                     0px;
+    cycle:                       true;
+    dynamic:                     false;
+    scrollbar:                   false;
+    layout:                      vertical;
+    flow:                        horizontal;
+    fixed-height:                true;
+    fixed-columns:               true;
+    background-color:            transparent;
+    border:                      0px;
+}
+
+element,
+element normal.normal,
+element alternate.normal {
+    enabled:                     true;
+    orientation:                 vertical;
+    children:                    [ "element-text" ];
+    spacing:                     0px;
+    padding:                     0px;
+    border:                      3px;
+    border-radius:               18px;
+    border-color:                @muted;
+    cursor:                      pointer;
+    background-color:            transparent;
+    text-color:                  @fg;
+}
+
+element selected,
+element selected.normal,
+element selected.active,
+element selected.urgent {
+    background-color:            transparent;
+    text-color:                  @primary;
+    border-color:                @primary;
+}
+
+element-text {
+    vertical-align:              0.5;
+    horizontal-align:            0.5;
+    padding:                     0px;
+    cursor:                      inherit;
+    background-color:            transparent;
+    text-color:                  inherit;
+    highlight:                   none;
+    expand:                      false;
+}

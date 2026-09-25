@@ -1,13 +1,16 @@
 #! /bin/sh
 
-# color
+# variables
 primary="#F0C674"
+RICE=$(cat "$HOME/.config/bspwm/rice")
+
+# hotkey
+pgrep -x sxhkd >/dev/null || sxhkd &
 
 # cursor
 xsetroot -xcf /usr/share/icons/Qogir-cursors/cursors/left_ptr 24
 
-pgrep -x sxhkd >/dev/null || sxhkd &
-
+# desktop
 bspc monitor -d I II III IV V VI
 
 bspc config border_width 2
@@ -51,7 +54,7 @@ killall -q polybar
 polybar down-panel &
 
 # background
-pic_dir="$HOME/.config/bspwm/pictures"
+pic_dir="$HOME/.config/bspwm/rices/$RICE/wallpapers"
 wall=$(find "$pic_dir" -maxdepth 1 -type f -name 'main_*' 2>/dev/null | head -n 1)
 if [ -z "$wall" ] && [ -f "$pic_dir/background.jpg" ]; then
   wall="$pic_dir/background.jpg"
