@@ -172,10 +172,10 @@ configuration {
 }
 
 * {
-  bg: #000000;
-  fg: #C5C8C6;
-  primary: #F0C674;
-  disabled: #707880;
+  bg: #161117;
+  fg: #757176;
+  primary: #D9ADE8;
+  disabled: #757176;
   /* Fallback. Each hotkey overrides this with -theme-str. */
   menu-title: "󱇪 Apps";
 
@@ -188,10 +188,11 @@ configuration {
 }
 
 prompt, textbox-prompt-colon {
-  text-color: var(primary);
+  text-color: var(fg);
 }
 
 entry {
+  placeholder: "";
   placeholder-color: var(disabled);
 }
 

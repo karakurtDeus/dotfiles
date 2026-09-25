@@ -6,10 +6,9 @@ configuration {
 }
 
 * {
-    bg: #000000;
-    fg: #C5C8C6;
-    primary: #F0C674;
-    icon-fg: #000000;
+    bg: #161117;
+    fg: #DBD6DD;
+    primary: #D9ADE8;
 }
 
 window {
@@ -51,7 +50,7 @@ listview {
     fixed-columns:               true;
     cursor:                      "default";
     background-color:            transparent;
-    text-color:                  @icon-fg;
+    text-color:                  @bg;
     border:                      0px;
     border-color:                @bg;
 }

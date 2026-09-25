@@ -4,10 +4,10 @@ configuration {
 }
 
 * {
-    bg: #000000;
-    fg: #C5C8C6;
-    primary: #F0C674;
-    muted: #707880;
+    bg: #161117;
+    fg: #DBD6DD;
+    primary: #D9ADE8;
+    disabled: #757176;
 }
 
 window {
@@ -58,7 +58,7 @@ element alternate.normal {
     padding:                     0px;
     border:                      3px;
     border-radius:               18px;
-    border-color:                @muted;
+    border-color:                @disabled;
     cursor:                      pointer;
     background-color:            transparent;
     text-color:                  @fg;
