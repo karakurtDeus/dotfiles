@@ -13,13 +13,9 @@ xsetroot -xcf /usr/share/icons/Qogir-cursors/cursors/left_ptr 24
 # desktop
 bspc monitor -d I II III IV V VI
 
-bspc config border_width 2
-bspc config window_gap 5
-
-bspc config top_padding 0
-bspc config bottom_padding 0
-bspc config left_padding -5
-bspc config right_padding -5
+while IFS='=' read -r key value; do
+  [ -n "$key" ] && bspc config "$key" "$value"
+done < "$HOME/.config/bspwm/rices/$RICE/config/bspwm"
 
 bspc config split_ratio 0.52
 bspc config borderless_monocle true
@@ -44,7 +40,7 @@ pkill dunst
 dunst &
 
 # buffer
-pgrep -x clipmenud >/dev/null || clipmenud &
+pgrep -x clipmenud >/dev/null || CM_MAX_CLIPS=100 clipmenud &
 
 # screen shot
 pgrep -x flameshot >/dev/null || flameshot &

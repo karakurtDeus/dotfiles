@@ -16,26 +16,42 @@ def color_to_hex(color):
 
 # --------------------------
 # BACKGROUND COLORS
-GUI_BG = hex_to_color("#000000")
-GUI_ACCENT = hex_to_color("#F0C674")
+GUI_BG = hex_to_color("#161117")
+GUI_ACCENT = hex_to_color("#D9ADE8")
 # --------------------------
 
 # --------------------------
 # TEXT
-GUI_TEXT = hex_to_color("#FFFFFF")
-GUI_BUTTON_TEXT = hex_to_color("#F0C674")
+GUI_TEXT = hex_to_color("#DBD6DD")
+GUI_BUTTON_TEXT = hex_to_color("#DBD6DD")
 # --------------------------
 
 # --------------------------
 # BUTTONS
-GUI_BUTTON = hex_to_color("#000000")
-GUI_BUTTON_HOVERED = hex_to_color("#1A1A1A")
-GUI_BUTTON_ACTIVE = hex_to_color("#F0C674")
+GUI_BUTTON = hex_to_color("#1B191C")
+GUI_BUTTON_HOVERED = hex_to_color("#4B3E50")
+GUI_BUTTON_ACTIVE = hex_to_color("#4B3E50")
+# --------------------------
+
+# --------------------------
+# INPUTS
+GUI_FRAME = hex_to_color("#1B191C")
+GUI_FRAME_HOVERED = hex_to_color("#1B191C")
+GUI_FRAME_ACTIVE = hex_to_color("#1B191C")
 # --------------------------
 
 # --------------------------
 # TAB BAR
-GUI_TAB = hex_to_color("#000000")
-GUI_TAB_HOVERED = hex_to_color("#1A1A1A")
-GUI_TAB_SELECTED = hex_to_color("#000000")
+GUI_TAB = hex_to_color("#1B191C")
+GUI_TAB_HOVERED = hex_to_color("#4A3D50")
+GUI_TAB_SELECTED = hex_to_color("#4A3D50")
+# --------------------------
+
+# --------------------------
+# POPUP
+GUI_POPUP = hex_to_color("#1B191C")
+GUI_POPUP_BORDER = hex_to_color("#4A3D50")
+GUI_HEADER = hex_to_color("#4A3D50")
+GUI_HEADER_HOVERED = hex_to_color("#4A3D50")
+GUI_HEADER_ACTIVE = hex_to_color("#4A3D50")
 # --------------------------

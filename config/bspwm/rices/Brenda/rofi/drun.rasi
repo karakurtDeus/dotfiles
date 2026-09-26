@@ -218,6 +218,7 @@ window {
   height: 600px;
   border: 0;
   border-radius: 16px;
+  padding: 20px 25px;
 }
 
 mainbox {

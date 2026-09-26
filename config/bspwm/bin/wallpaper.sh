@@ -84,6 +84,7 @@ chosen=$(
   for file in "${walls[@]}"; do
     name=$(basename "$file")
     label="${name%.*}"
+    label="${label#"$prefix"}"
     thumb=$(thumb_of "$file") || thumb="$file"
     printf '%s\0icon\x1f%s\x1fdisplay\x1f%s\n' "$name" "$thumb" "$label"
   done | rofi -dmenu -i -window-title wallpaper \

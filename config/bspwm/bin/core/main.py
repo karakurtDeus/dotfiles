@@ -9,6 +9,7 @@ KERNEL = kernel_version()
 PACKAGES = package_count()
 CPU = cpu_name()
 GPU = gpu_names()
+THEME = get_current_theme()
 # --------------------------
 
 # --------------------------
@@ -47,6 +48,7 @@ def control_panel():
     imgui.new_line()
 
     rows = [
+        ("Theme:", THEME),
         ("Kernel:", KERNEL),
         ("Packages:", PACKAGES),
         ("CPU:", CPU),
@@ -102,6 +104,8 @@ def setup_style():
     hello_imgui.imgui_default_settings.setup_default_imgui_style()
     style = imgui.get_style()
     style.tab_bar_border_size = 0
+    style.frame_border_size = 0
+    style.popup_border_size = 1
     for color in SURFACES:
         style.set_color_(color, BACKGROUND)
     style.set_color_(imgui.Col_.text, GUI_TEXT)
@@ -109,11 +113,19 @@ def setup_style():
     style.set_color_(imgui.Col_.button, GUI_BUTTON)
     style.set_color_(imgui.Col_.button_hovered, GUI_BUTTON_HOVERED)
     style.set_color_(imgui.Col_.button_active, GUI_BUTTON_ACTIVE)
+    style.set_color_(imgui.Col_.frame_bg, GUI_FRAME)
+    style.set_color_(imgui.Col_.frame_bg_hovered, GUI_FRAME_HOVERED)
+    style.set_color_(imgui.Col_.frame_bg_active, GUI_FRAME_ACTIVE)
     style.set_color_(imgui.Col_.tab, GUI_TAB)
     style.set_color_(imgui.Col_.tab_hovered, GUI_TAB_HOVERED)
     style.set_color_(imgui.Col_.tab_selected, GUI_TAB_SELECTED)
     style.set_color_(imgui.Col_.tab_dimmed, GUI_TAB)
     style.set_color_(imgui.Col_.tab_dimmed_selected, GUI_TAB_SELECTED)
+    style.set_color_(imgui.Col_.popup_bg, GUI_POPUP)
+    style.set_color_(imgui.Col_.border, GUI_POPUP_BORDER)
+    style.set_color_(imgui.Col_.header, GUI_HEADER)
+    style.set_color_(imgui.Col_.header_hovered, GUI_HEADER_HOVERED)
+    style.set_color_(imgui.Col_.header_active, GUI_HEADER_ACTIVE)
 
 
 def cheatsheet_panel():
@@ -147,6 +159,56 @@ def cheatsheet_panel():
         imgui.set_cursor_pos_x(origin_x + label_width + gap)
         imgui.text(str(value))
 
+def appearance_panel():
+    title = "Appearance"
+
+    avail = imgui.get_content_region_avail().x
+    text_width = imgui.calc_text_size(title).x
+    imgui.set_cursor_pos_x(imgui.get_cursor_pos_x() + (avail - text_width) * 0.5)
+    imgui.push_font(None, imgui.get_style().font_size_base * 1.4)
+    imgui.text_colored(GUI_ACCENT, title)
+    imgui.pop_font()
+
+    imgui.push_font(None, imgui.get_style().font_size_base * 1.2)
+    imgui.text_colored(GUI_ACCENT, "BSPWM window")
+    imgui.pop_font()
+
+    imgui.new_line()
+
+    _, values = current_bspwm_settings()
+    if not values:
+        return
+
+    labels = [(key, key.replace("_", " ").capitalize() + ":") for key in values]
+    label_width = max(imgui.calc_text_size(label).x for _, label in labels)
+    gap = imgui.calc_text_size("    ").x
+    origin_x = imgui.get_cursor_pos_x()
+
+    for key, label in labels:
+        imgui.text_colored(GUI_ACCENT, label)
+        imgui.same_line()
+        imgui.set_cursor_pos_x(origin_x + label_width + gap)
+        imgui.set_next_item_width(140)
+        changed, new_value = imgui.input_int(f"##{key}", values[key])
+        if changed:
+            set_bspwm_setting(key, new_value)
+
+def colors_panel():
+    title = "Colors"
+
+    avail = imgui.get_content_region_avail().x
+    text_width = imgui.calc_text_size(title).x
+    imgui.set_cursor_pos_x(imgui.get_cursor_pos_x() + (avail - text_width) * 0.5)
+    imgui.push_font(None, imgui.get_style().font_size_base * 1.4)
+    imgui.text_colored(GUI_ACCENT, title)
+    imgui.pop_font()
+
+    imgui.push_font(None, imgui.get_style().font_size_base * 1.2)
+    imgui.text_colored(GUI_ACCENT, "BSPWM")
+    imgui.pop_font()
+
+    imgui.new_line()
+
 def main():
 
     params = hello_imgui.RunnerParams()
@@ -162,15 +224,26 @@ def main():
 
     params.ini_disable = True
     params.ini_clear_previous_settings = True
+    params.docking_params.layout_condition = (
+        hello_imgui.DockingLayoutCondition.application_start
+    )
     params.imgui_window_params.background_color = BACKGROUND
     params.callbacks.setup_imgui_style = setup_style
 
-    # Main GUI
-    params.callbacks.show_gui = lambda: None
+    def show_gui():
+        # The last docked window takes focus on the first frame.
+        if show_gui.frame == 1:
+            params.docking_params.focus_dockable_window("Control Panel")
+        show_gui.frame += 1
+
+    show_gui.frame = 0
+    params.callbacks.show_gui = show_gui
 
     # Window list
     windows = [
         ("Control Panel", control_panel),
+        ("Appearance", appearance_panel),
+        ("Colors", colors_panel),
         ("Cheatsheet", cheatsheet_panel),
     ]
 
