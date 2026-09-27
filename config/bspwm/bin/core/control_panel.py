@@ -6,7 +6,10 @@ def return_username():
 from pathlib import Path
 import os
 import pwd
+import re
 import subprocess
+import tempfile
+import time
 
 
 def cpu_name():
@@ -109,3 +112,431 @@ def set_bspwm_setting(key, value):
     _bspwm["values"][key] = value
     write_bspwm_config(_bspwm["values"], _bspwm["theme"])
     subprocess.run(["bspc", "config", key, str(value)], check=False)
+
+
+PICOM_CONF = Path.home() / ".config/picom/picom.conf"
+_PICOM_ANIMATIONS = """# picom-panel-animations
+animations = ({
+  triggers = ["open", "show"];
+  preset = "slide-in";
+  duration = 0.2;
+}, {
+  triggers = ["close", "hide"];
+  preset = "slide-out";
+  duration = 0.2;
+});
+# /picom-panel-animations
+"""
+_SQUARE_RULE = """  {
+    match = "class_g = 'Polybar' || class_g = 'Dunst'";
+    corner-radius = 0;
+  },
+"""
+_picom = {"values": None}
+
+
+def _picom_scalar(text, key):
+    match = re.search(rf"(?m)^{re.escape(key)}\s*=\s*([^;\n]*);", text)
+    return match.group(1).strip() if match else None
+
+
+def _set_picom_scalar(text, key, value):
+    line = f"{key} = {value};"
+    pattern = rf"(?m)^{re.escape(key)}\s*=\s*[^;\n]*;"
+    if re.search(pattern, text):
+        return re.sub(pattern, line, text, count=1)
+    if text and not text.endswith("\n"):
+        text += "\n"
+    return text + line + "\n"
+
+
+def read_picom_settings():
+    text = PICOM_CONF.read_text() if PICOM_CONF.is_file() else ""
+    fading = _picom_scalar(text, "fading") == "true"
+    step = _picom_scalar(text, "fade-in-step") or "0.03"
+    try:
+        fade = int(round(float(step) * 100)) if fading else 0
+    except ValueError:
+        fade = 3 if fading else 0
+    color = (_picom_scalar(text, "shadow-color") or '"#000000"').strip().strip('"')
+    radius = _picom_scalar(text, "corner-radius") or "0"
+    catchall = re.search(r"\{\s*blur-background\s*=\s*false\s*;", text)
+    return {
+        "corner_radius": int(radius) if radius.isdigit() else 0,
+        "shadow": _picom_scalar(text, "shadow") == "true",
+        "shadow_color": color if color.startswith("#") else "#000000",
+        "fading": min(100, max(0, fade)),
+        "blur": _picom_scalar(text, "blur-background") == "true" and not catchall,
+        "animations": "# picom-panel-animations" in text,
+        "backend": (_picom_scalar(text, "backend") or '"glx"').strip().strip('"'),
+        "vsync": _picom_scalar(text, "vsync") != "false",
+    }
+
+
+def picom_config_text(text, settings):
+    radius = min(99, max(0, int(settings["corner_radius"])))
+    fade = min(100, max(0, int(settings["fading"])))
+    color = settings["shadow_color"]
+    if not color.startswith("#"):
+        color = "#" + color
+    backend = settings.get("backend", "glx")
+    if backend not in ("glx", "egl", "xrender"):
+        backend = "glx"
+    text = _set_picom_scalar(text, "backend", f'"{backend}"')
+    text = _set_picom_scalar(text, "vsync", "true" if settings.get("vsync", True) else "false")
+    text = _set_picom_scalar(text, "corner-radius", str(radius))
+    text = _set_picom_scalar(text, "shadow", "true" if settings["shadow"] else "false")
+    text = _set_picom_scalar(text, "shadow-color", f'"{color}"')
+    text = _set_picom_scalar(text, "fading", "true" if fade else "false")
+    if fade:
+        step = f"{fade / 100:.2f}"
+        text = _set_picom_scalar(text, "fade-in-step", step)
+        text = _set_picom_scalar(text, "fade-out-step", step)
+    text = _set_picom_scalar(text, "blur-background", "true" if settings["blur"] else "false")
+    catchall = re.compile(r"\n[ \t]*\{\s*blur-background\s*=\s*false\s*;\s*\},?")
+    if settings["blur"]:
+        text = catchall.sub("", text, count=1)
+    elif not re.search(r"\{\s*blur-background\s*=\s*false\s*;", text):
+        text = text.replace("rules: (", "rules: (\n  { blur-background = false; },", 1)
+    text = re.sub(r"\n?# picom-panel-animations\n.*?# /picom-panel-animations\n?", "\n", text, flags=re.S)
+    if settings["animations"]:
+        if not text.endswith("\n"):
+            text += "\n"
+        text += _PICOM_ANIMATIONS
+    text = text.replace(
+        'match = "class_g = \'Polybar\'";',
+        'match = "class_g = \'Polybar\' || class_g = \'Dunst\'";',
+        1,
+    )
+    if "class_g = 'Dunst'" not in text:
+        text = text.replace("rules: (", "rules: (\n" + _SQUARE_RULE, 1)
+    return text
+
+
+def picom_config_works(text):
+    fd, name = tempfile.mkstemp(suffix=".conf")
+    os.close(fd)
+    path = Path(name)
+    path.write_text(text)
+    proc = subprocess.Popen(
+        ["picom", "--config", str(path)],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
+        start_new_session=True,
+    )
+    try:
+        _, err = proc.communicate(timeout=1)
+    except subprocess.TimeoutExpired:
+        err = b""
+        proc.kill()
+        proc.wait(timeout=1)
+    path.unlink(missing_ok=True)
+    message = err.decode(errors="replace")
+    return "Failed to get configuration" not in message and "error when parsing" not in message
+
+
+def reload_picom():
+    subprocess.run(["pkill", "-x", "picom"], check=False)
+    for _ in range(40):
+        if subprocess.call(["pgrep", "-x", "picom"], stdout=subprocess.DEVNULL) != 0:
+            break
+        time.sleep(0.05)
+    subprocess.Popen(
+        ["picom", "--config", str(PICOM_CONF)],
+        start_new_session=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+
+def current_picom_settings():
+    if _picom["values"] is None:
+        _picom["values"] = read_picom_settings()
+    return _picom["values"]
+
+
+def apply_picom_settings():
+    if _picom["values"] is None or not PICOM_CONF.is_file():
+        return
+    original = PICOM_CONF.read_text()
+    updated = picom_config_text(original, _picom["values"])
+    if updated == original or not picom_config_works(updated):
+        return
+    PICOM_CONF.write_text(updated)
+    reload_picom()
+
+
+DUNST_CONF = Path.home() / ".config/dunst/dunstrc"
+_DUNST_COLOR = re.compile(r"^#[0-9A-Fa-f]{6}$")
+_DUNST_ORIGINS = [
+    "top-left",
+    "top-center",
+    "top-right",
+    "left-center",
+    "right-center",
+    "bottom-left",
+    "bottom-center",
+    "bottom-right",
+]
+_DUNST_CORNERS = [
+    "all",
+    "top",
+    "bottom",
+    "left",
+    "right",
+    "top-left",
+    "top-right",
+    "bottom-left",
+    "bottom-right",
+]
+DUNST_FIELDS = [
+    ("choice", "origin", "Position:", _DUNST_ORIGINS),
+    ("int", "offset_x", "Offset X:", -400, 400),
+    ("int", "offset_y", "Offset Y:", -400, 400),
+    ("int", "width", "Width:", 50, 800),
+    ("int", "height_min", "Min height:", 0, 400),
+    ("int", "height_max", "Max height:", 0, 600),
+    ("int", "corner_radius", "Radius:", 0, 48),
+    ("choice", "corners", "Corners:", _DUNST_CORNERS),
+    ("int", "icon_corner_radius", "Icon radius:", 0, 48),
+    ("int", "progress_bar_corner_radius", "Progress radius:", 0, 24),
+    ("int", "padding", "Vertical padding:", 0, 64),
+    ("int", "horizontal_padding", "Horizontal padding:", 0, 64),
+    ("int", "text_icon_padding", "Icon padding:", 0, 64),
+    ("int", "gap_size", "Gap:", 0, 40),
+    ("choice", "alignment", "Alignment:", ["left", "center", "right"]),
+    ("choice", "vertical_alignment", "Vertical alignment:", ["top", "center", "bottom"]),
+    ("choice", "icon_position", "Icon:", ["off", "left", "right", "top"]),
+    ("int", "min_icon_size", "Min icon:", 0, 256),
+    ("int", "max_icon_size", "Max icon:", 0, 256),
+    ("int", "transparency", "Transparency:", 0, 100),
+    ("int", "separator_height", "Separator:", 0, 16),
+    ("int", "line_height", "Line height:", 0, 48),
+    ("int", "notification_limit", "Limit:", 0, 20),
+]
+DUNST_TIMEOUTS = [
+    ("urgency_low", "Low timeout:"),
+    ("urgency_normal", "Normal timeout:"),
+    ("urgency_critical", "Critical timeout:"),
+]
+_DUNST_INT_DEFAULTS = {
+    "offset_x": 0,
+    "offset_y": 0,
+    "width": 300,
+    "height_min": 0,
+    "height_max": 300,
+    "corner_radius": 0,
+    "icon_corner_radius": 0,
+    "progress_bar_corner_radius": 0,
+    "padding": 0,
+    "horizontal_padding": 0,
+    "text_icon_padding": 0,
+    "min_icon_size": 0,
+    "max_icon_size": 0,
+    "gap_size": 0,
+    "transparency": 0,
+    "separator_height": 0,
+    "line_height": 0,
+    "notification_limit": 0,
+}
+_DUNST_STR_DEFAULTS = {
+    "origin": "top-center",
+    "corners": "all",
+    "alignment": "center",
+    "vertical_alignment": "center",
+    "icon_position": "left",
+}
+_DUNST_PAIR_KEYS = {"offset_x", "offset_y", "height_min", "height_max"}
+_dunst = {"values": None, "fonts": None}
+
+
+def parse_dunst_pair(value, fallback):
+    raw = value.strip().strip("()")
+    if "," in raw:
+        left, right = raw.split(",", 1)
+    elif raw.lstrip("-").isdigit():
+        number = int(raw)
+        return number, number
+    else:
+        return fallback
+    try:
+        return int(left.strip()), int(right.strip())
+    except ValueError:
+        return fallback
+
+
+def split_font(spec):
+    parts = spec.rsplit(None, 1)
+    if len(parts) == 2 and parts[1].isdigit():
+        return parts[0], parts[1]
+    return spec, "11"
+
+
+def dunst_color_label(section, key):
+    key_name = {
+        "background": "background",
+        "foreground": "foreground",
+        "frame_color": "frame",
+    }.get(key, key.replace("_", " "))
+    prefix = {
+        "urgency_low": "Low",
+        "urgency_normal": "Normal",
+        "urgency_critical": "Critical",
+        "global": "Global",
+    }.get(section, section.replace("_", " ").title())
+    return f"{prefix} {key_name}:"
+
+
+def system_fonts():
+    if _dunst["fonts"] is None:
+        try:
+            out = subprocess.check_output(["fc-list", "-f", "%{family[0]}\n"], text=True)
+            _dunst["fonts"] = sorted(
+                {line.strip() for line in out.splitlines() if line.strip()},
+                key=str.casefold,
+            )
+        except (OSError, subprocess.CalledProcessError):
+            _dunst["fonts"] = []
+    return _dunst["fonts"]
+
+
+def read_dunst_settings():
+    text = DUNST_CONF.read_text() if DUNST_CONF.is_file() else ""
+    section = None
+    family, size = "Liberation Sans", "11"
+    frame_width = 0
+    ints = dict(_DUNST_INT_DEFAULTS)
+    strs = dict(_DUNST_STR_DEFAULTS)
+    colors = {}
+    order = []
+    timeouts = {section: 10 for section, _label in DUNST_TIMEOUTS}
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        if stripped.startswith("[") and stripped.endswith("]"):
+            section = stripped[1:-1].strip()
+            continue
+        if section is None or "=" not in stripped:
+            continue
+        key, value = stripped.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        if section == "global" and key == "font":
+            family, size = split_font(value)
+        if section == "global" and key == "frame_width":
+            frame_width = int(value) if value.isdigit() else 0
+        if section == "global" and key in _DUNST_INT_DEFAULTS and value.lstrip("-").isdigit():
+            ints[key] = int(value)
+        if section == "global" and key in _DUNST_STR_DEFAULTS:
+            strs[key] = value
+        if section == "global" and key == "offset":
+            ints["offset_x"], ints["offset_y"] = parse_dunst_pair(value, (0, 0))
+        if section == "global" and key == "height":
+            ints["height_min"], ints["height_max"] = parse_dunst_pair(value, (0, 300))
+        if section in timeouts and key == "timeout" and value.isdigit():
+            timeouts[section] = int(value)
+        if _DUNST_COLOR.fullmatch(value):
+            pair = (section, key)
+            if pair not in colors:
+                order.append(pair)
+            colors[pair] = value
+    return {
+        "family": family,
+        "size": size,
+        "frame_width": frame_width,
+        "frame_width_on": frame_width or 2,
+        "ints": ints,
+        "strs": strs,
+        "colors": colors,
+        "order": order,
+        "timeouts": timeouts,
+    }
+
+
+def replace_dunst_key(text, section, key, rendered):
+    lines = text.splitlines(keepends=True)
+    current = None
+    target = None
+    for index, line in enumerate(lines):
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        if stripped.startswith("[") and stripped.endswith("]"):
+            current = stripped[1:-1].strip()
+            continue
+        if current != section or "=" not in stripped:
+            continue
+        if stripped.split("=", 1)[0].strip() == key:
+            target = index
+    if target is None:
+        return text
+    raw = lines[target]
+    indent = raw[: len(raw) - len(raw.lstrip(" \t"))]
+    ending = "\n" if raw.endswith("\n") else ""
+    lines[target] = f"{indent}{key} = {rendered}{ending}"
+    return "".join(lines)
+
+
+def dunst_config_text(text, settings):
+    font = f"{settings['family']} {settings['size']}".strip()
+    text = replace_dunst_key(text, "global", "font", font)
+    text = replace_dunst_key(text, "global", "frame_width", str(int(settings["frame_width"])))
+    for key, value in settings["ints"].items():
+        if key in _DUNST_PAIR_KEYS:
+            continue
+        text = replace_dunst_key(text, "global", key, str(int(value)))
+    for key, value in settings["strs"].items():
+        text = replace_dunst_key(text, "global", key, value)
+    text = replace_dunst_key(
+        text,
+        "global",
+        "offset",
+        f"({int(settings['ints']['offset_x'])}, {int(settings['ints']['offset_y'])})",
+    )
+    text = replace_dunst_key(
+        text,
+        "global",
+        "height",
+        f"({int(settings['ints']['height_min'])}, {int(settings['ints']['height_max'])})",
+    )
+    for section, key in settings["order"]:
+        text = replace_dunst_key(text, section, key, f'"{settings["colors"][(section, key)]}"')
+    for section, _label in DUNST_TIMEOUTS:
+        text = replace_dunst_key(text, section, "timeout", str(int(settings["timeouts"][section])))
+    return text
+
+
+def reload_dunst():
+    result = subprocess.run(
+        ["dunstctl", "reload"],
+        check=False,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    if result.returncode == 0:
+        return
+    subprocess.run(["pkill", "-x", "dunst"], check=False)
+    subprocess.Popen(
+        ["dunst"],
+        start_new_session=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+
+def current_dunst_settings():
+    if _dunst["values"] is None:
+        _dunst["values"] = read_dunst_settings()
+    return _dunst["values"]
+
+
+def apply_dunst_settings():
+    if _dunst["values"] is None or not DUNST_CONF.is_file():
+        return
+    original = DUNST_CONF.read_text()
+    updated = dunst_config_text(original, _dunst["values"])
+    if updated == original:
+        return
+    DUNST_CONF.write_text(updated)
+    reload_dunst()

@@ -165,6 +165,9 @@ systemPkgs() {
     "xorg-xinit"
     "xorg-xset"
     "feh" # background
+    # just need xd
+    "cmatrix"
+    "cava"
   )
   installPkgs "${listPkgs[@]}"
 
@@ -221,6 +224,9 @@ personalPkgs() {
       "bluez"
       "bluez-utils"
       "bluetui"
+      "obs-studio"
+      "krita"
+      "kdenlive"
     )
     installPkgs "${listPkgs[@]}"
     local listPkgs=(

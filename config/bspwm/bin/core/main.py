@@ -74,6 +74,7 @@ def control_panel():
     imgui.new_line()
 
     shortcuts = [
+        ("Process manager", ["btop"], False),
         ("Network", ["nmtui"], False),
         ("Bluetooth", ["bluetui"], False),
         ("Audio", ["wpctl", "status"], True),
@@ -126,6 +127,9 @@ def setup_style():
     style.set_color_(imgui.Col_.header, GUI_HEADER)
     style.set_color_(imgui.Col_.header_hovered, GUI_HEADER_HOVERED)
     style.set_color_(imgui.Col_.header_active, GUI_HEADER_ACTIVE)
+    style.set_color_(imgui.Col_.check_mark, GUI_ACCENT)
+    style.set_color_(imgui.Col_.slider_grab, GUI_ACCENT)
+    style.set_color_(imgui.Col_.slider_grab_active, GUI_ACCENT)
 
 
 def cheatsheet_panel():
@@ -176,22 +180,201 @@ def appearance_panel():
     imgui.new_line()
 
     _, values = current_bspwm_settings()
-    if not values:
-        return
+    if values:
+        labels = [(key, key.replace("_", " ").capitalize() + ":") for key in values]
+        label_width = max(imgui.calc_text_size(label).x for _, label in labels)
+        gap = imgui.calc_text_size("    ").x
+        origin_x = imgui.get_cursor_pos_x()
 
-    labels = [(key, key.replace("_", " ").capitalize() + ":") for key in values]
-    label_width = max(imgui.calc_text_size(label).x for _, label in labels)
+        for key, label in labels:
+            imgui.text_colored(GUI_ACCENT, label)
+            imgui.same_line()
+            imgui.set_cursor_pos_x(origin_x + label_width + gap)
+            imgui.set_next_item_width(140)
+            changed, new_value = imgui.input_int(f"##{key}", values[key])
+            if changed:
+                set_bspwm_setting(key, new_value)
+
+    imgui.new_line()
+    imgui.push_font(None, imgui.get_style().font_size_base * 1.2)
+    imgui.text_colored(GUI_ACCENT, "Picom")
+    imgui.pop_font()
+    imgui.new_line()
+
+    settings = current_picom_settings()
+    picom_labels = [
+        "Backend:",
+        "vSync:",
+        "Corner radius:",
+        "Shadows:",
+        "Shadow color:",
+        "Fading:",
+        "Blur:",
+        "Animations:",
+    ]
+    backends = ["glx", "egl", "xrender"]
+    label_width = max(imgui.calc_text_size(label).x for label in picom_labels)
     gap = imgui.calc_text_size("    ").x
     origin_x = imgui.get_cursor_pos_x()
 
-    for key, label in labels:
+    def edit_picom(label, key, draw, live=False):
         imgui.text_colored(GUI_ACCENT, label)
         imgui.same_line()
         imgui.set_cursor_pos_x(origin_x + label_width + gap)
-        imgui.set_next_item_width(140)
-        changed, new_value = imgui.input_int(f"##{key}", values[key])
+        imgui.set_next_item_width(180)
+        changed, value = draw(settings[key])
         if changed:
-            set_bspwm_setting(key, new_value)
+            settings[key] = value
+        if (live and changed) or imgui.is_item_deactivated_after_edit():
+            apply_picom_settings()
+
+    def draw_color(value):
+        changed, color = imgui.color_edit3(
+            "##shadow-color",
+            hex_to_color(value),
+            imgui.ColorEditFlags_.display_hex | imgui.ColorEditFlags_.no_options,
+        )
+        return changed, color_to_hex(color) if changed else value
+
+    def draw_backend(value):
+        index = backends.index(value) if value in backends else 0
+        changed, index = imgui.combo("##backend", index, backends)
+        return changed, backends[index]
+
+    edit_picom("Backend:", "backend", draw_backend, live=True)
+    edit_picom("vSync:", "vsync", lambda v: imgui.checkbox("##vsync", v), live=True)
+    edit_picom("Corner radius:", "corner_radius", lambda v: imgui.slider_int("##corner-radius", v, 0, 99))
+    edit_picom("Shadows:", "shadow", lambda v: imgui.checkbox("##shadow", v), live=True)
+    edit_picom("Shadow color:", "shadow_color", draw_color)
+    edit_picom("Fading:", "fading", lambda v: imgui.slider_int("##fading", v, 0, 100))
+    edit_picom("Blur:", "blur", lambda v: imgui.checkbox("##blur", v), live=True)
+    edit_picom("Animations:", "animations", lambda v: imgui.checkbox("##animations", v), live=True)
+
+    imgui.new_line()
+    imgui.push_font(None, imgui.get_style().font_size_base * 1.2)
+    imgui.text_colored(GUI_ACCENT, "Dunst")
+    imgui.pop_font()
+    imgui.new_line()
+
+    dunst = current_dunst_settings()
+    fonts = list(system_fonts())
+    if dunst["family"] and dunst["family"] not in fonts:
+        fonts.insert(0, dunst["family"])
+
+    color_rows = [(dunst_color_label(section, key), section, key) for section, key in dunst["order"]]
+    dunst_labels = (
+        ["Font:", "Size:", "Border:", "Border size:"]
+        + [field[2] for field in DUNST_FIELDS]
+        + [label for _section, label in DUNST_TIMEOUTS]
+        + [label for label, _, _ in color_rows]
+    )
+    label_width = max(imgui.calc_text_size(label).x for label in dunst_labels)
+    gap = imgui.calc_text_size("    ").x
+    origin_x = imgui.get_cursor_pos_x()
+
+    imgui.text_colored(GUI_ACCENT, "Font:")
+    imgui.same_line()
+    imgui.set_cursor_pos_x(origin_x + label_width + gap)
+    imgui.set_next_item_width(300)
+    if fonts:
+        index = fonts.index(dunst["family"]) if dunst["family"] in fonts else 0
+        changed, index = imgui.combo("##dunst-font", index, fonts, 12)
+        if changed:
+            dunst["family"] = fonts[index]
+            apply_dunst_settings()
+
+    imgui.text_colored(GUI_ACCENT, "Size:")
+    imgui.same_line()
+    imgui.set_cursor_pos_x(origin_x + label_width + gap)
+    imgui.set_next_item_width(300)
+    size = int(dunst["size"]) if str(dunst["size"]).isdigit() else 11
+    changed, size = imgui.slider_int("##dunst-size", size, 6, 48)
+    if changed:
+        dunst["size"] = str(size)
+    if imgui.is_item_deactivated_after_edit():
+        apply_dunst_settings()
+
+    def dunst_control(label):
+        imgui.text_colored(GUI_ACCENT, label)
+        imgui.same_line()
+        imgui.set_cursor_pos_x(origin_x + label_width + gap)
+        imgui.set_next_item_width(300)
+
+    for field in DUNST_FIELDS:
+        kind, key, label = field[0], field[1], field[2]
+        dunst_control(label)
+        if kind == "int":
+            low, high = field[3], field[4]
+            changed, value = imgui.slider_int(f"##dunst-{key}", int(dunst["ints"][key]), low, high)
+            if changed:
+                dunst["ints"][key] = value
+            if imgui.is_item_deactivated_after_edit():
+                apply_dunst_settings()
+        else:
+            options = list(field[3])
+            current = dunst["strs"][key]
+            if current not in options:
+                options.insert(0, current)
+            index = options.index(current)
+            changed, index = imgui.combo(f"##dunst-{key}", index, options, 8)
+            if changed:
+                dunst["strs"][key] = options[index]
+                apply_dunst_settings()
+
+    for section, label in DUNST_TIMEOUTS:
+        dunst_control(label)
+        changed, value = imgui.slider_int(
+            f"##dunst-timeout-{section}",
+            int(dunst["timeouts"][section]),
+            0,
+            120,
+        )
+        if changed:
+            dunst["timeouts"][section] = value
+        if imgui.is_item_deactivated_after_edit():
+            apply_dunst_settings()
+
+    imgui.text_colored(GUI_ACCENT, "Border:")
+    imgui.same_line()
+    imgui.set_cursor_pos_x(origin_x + label_width + gap)
+    enabled = int(dunst["frame_width"]) > 0
+    changed, enabled = imgui.checkbox("##dunst-border", enabled)
+    if changed:
+        if enabled:
+            dunst["frame_width"] = int(dunst["frame_width_on"]) or 2
+        else:
+            if int(dunst["frame_width"]) > 0:
+                dunst["frame_width_on"] = int(dunst["frame_width"])
+            dunst["frame_width"] = 0
+        apply_dunst_settings()
+
+    imgui.text_colored(GUI_ACCENT, "Border size:")
+    imgui.same_line()
+    imgui.set_cursor_pos_x(origin_x + label_width + gap)
+    imgui.set_next_item_width(300)
+    border_size = int(dunst["frame_width_on"]) or 2
+    changed, border_size = imgui.slider_int("##dunst-border-size", border_size, 1, 16)
+    if changed:
+        dunst["frame_width_on"] = border_size
+        if int(dunst["frame_width"]) > 0:
+            dunst["frame_width"] = border_size
+    if imgui.is_item_deactivated_after_edit() and int(dunst["frame_width"]) > 0:
+        apply_dunst_settings()
+
+    for label, section, key in color_rows:
+        imgui.text_colored(GUI_ACCENT, label)
+        imgui.same_line()
+        imgui.set_cursor_pos_x(origin_x + label_width + gap)
+        imgui.set_next_item_width(300)
+        changed, color = imgui.color_edit3(
+            f"##dunst-{section}-{key}",
+            hex_to_color(dunst["colors"][(section, key)]),
+            imgui.ColorEditFlags_.display_hex | imgui.ColorEditFlags_.no_options,
+        )
+        if changed:
+            dunst["colors"][(section, key)] = color_to_hex(color)
+        if imgui.is_item_deactivated_after_edit():
+            apply_dunst_settings()
 
 def colors_panel():
     title = "Colors"

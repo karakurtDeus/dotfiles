@@ -1,11 +1,33 @@
 #!/bin/bash
 
-bg=000000ff
-fg=C5C8C6ff
-ring=F0C674ff
-date=F0C674ff
-verify=9ece6aff
-wrong=f7768eff
+colors_file="${XDG_CONFIG_HOME:-$HOME/.config}/polybar/colors.ini"
+
+color() {
+  awk -F '=' -v key="$1" '
+    /^[[:space:]]*#/ { next }
+    {
+      gsub(/^[[:space:]]+|[[:space:]]+$/, "", $1)
+      if ($1 == key) {
+        value = $2
+        gsub(/[[:space:]#]/, "", value)
+        print value
+        exit
+      }
+    }
+  ' "$colors_file"
+}
+
+bg=$(color lockscreen_bg)
+fg=$(color lockscreen_fg)
+ring=$(color lockscreen_ring)
+date=$(color lockscreen_date)
+verify=$(color lockscreen_verify)
+wrong=$(color lockscreen_wrong)
+
+if [ -z "$bg" ] || [ -z "$fg" ] || [ -z "$ring" ] || [ -z "$date" ] || [ -z "$verify" ] || [ -z "$wrong" ]; then
+  echo "lockscreen: missing lockscreen_* color in $colors_file" >&2
+  exit 1
+fi
 
 TEMP_IMAGE=/tmp/i3lock.png
 
