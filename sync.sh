@@ -15,6 +15,7 @@ listConfigDirs=(
   "xfce4"
   "fontconfig"
   "picom"
+  "btop"
 )
 
 listHomeFiles=(

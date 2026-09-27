@@ -583,6 +583,41 @@ def appearance_panel():
         draw_rofi_group("Select", "select")
         draw_rofi_group("Drun", "drun")
 
+    btop = current_btop_colors()
+    if btop:
+        imgui.new_line()
+        imgui.push_font(None, imgui.get_style().font_size_base * 1.2)
+        imgui.text_colored(GUI_ACCENT, "Btop")
+        imgui.pop_font()
+
+        def draw_btop_group(title, fields):
+            rows = [(key, label) for key, label in fields if key in btop]
+            if not rows:
+                return
+            imgui.new_line()
+            imgui.text_colored(GUI_ACCENT, title)
+            imgui.new_line()
+            label_width = max(imgui.calc_text_size(label).x for _key, label in rows)
+            gap = imgui.calc_text_size("    ").x
+            origin_x = imgui.get_cursor_pos_x()
+            for key, label in rows:
+                imgui.text_colored(GUI_ACCENT, label)
+                imgui.same_line()
+                imgui.set_cursor_pos_x(origin_x + label_width + gap)
+                imgui.set_next_item_width(300)
+                changed, color = imgui.color_edit3(
+                    f"##btop-{key}",
+                    hex_to_color(btop[key]),
+                    imgui.ColorEditFlags_.display_hex | imgui.ColorEditFlags_.no_options,
+                )
+                if changed:
+                    btop[key] = color_to_hex(color)
+                if imgui.is_item_deactivated_after_edit():
+                    apply_btop_colors()
+
+        for title, fields in BTOP_GROUPS:
+            draw_btop_group(title, fields)
+
 def autostart_panel():
     title = "Autostart"
     avail = imgui.get_content_region_avail().x

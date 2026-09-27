@@ -257,6 +257,83 @@ def _replace_rofi_color(text, key, hex_color):
     return "".join(lines)
 
 
+BTOP_THEME = Path.home() / ".config" / "btop" / "themes" / "colors.theme"
+BTOP_GROUPS = (
+    ("Colors", (
+        ("main_bg", "Background:"),
+        ("main_fg", "Foreground:"),
+        ("title", "Title:"),
+        ("hi_fg", "Highlight:"),
+        ("selected_bg", "Selected:"),
+        ("selected_fg", "Selected text:"),
+        ("inactive_fg", "Inactive:"),
+        ("graph_text", "Graph text:"),
+        ("meter_bg", "Meter:"),
+        ("proc_misc", "Process misc:"),
+        ("div_line", "Divider:"),
+    )),
+    ("Boxes", (
+        ("cpu_box", "CPU:"),
+        ("mem_box", "Memory:"),
+        ("net_box", "Network:"),
+        ("proc_box", "Processes:"),
+    )),
+    ("CPU", (("cpu_start", "Low:"), ("cpu_mid", "Mid:"), ("cpu_end", "High:"))),
+    ("Temperature", (("temp_start", "Low:"), ("temp_mid", "Mid:"), ("temp_end", "High:"))),
+    ("Used", (("used_start", "Low:"), ("used_mid", "Mid:"), ("used_end", "High:"))),
+    ("Free", (("free_start", "Low:"), ("free_mid", "Mid:"), ("free_end", "High:"))),
+    ("Cached", (("cached_start", "Low:"), ("cached_mid", "Mid:"), ("cached_end", "High:"))),
+    ("Available", (("available_start", "Low:"), ("available_mid", "Mid:"), ("available_end", "High:"))),
+    ("Download", (("download_start", "Low:"), ("download_mid", "Mid:"), ("download_end", "High:"))),
+    ("Upload", (("upload_start", "Low:"), ("upload_mid", "Mid:"), ("upload_end", "High:"))),
+    ("Processes", (("process_start", "Low:"), ("process_mid", "Mid:"), ("process_end", "High:"))),
+)
+_BTOP_LINE = re.compile(r'^(theme\[)([A-Za-z0-9_]+)(\]=")(#[0-9A-Fa-f]{6})(".*)$')
+_btop = {"values": None}
+
+
+def read_btop_colors():
+    colors = {}
+    if BTOP_THEME.is_file():
+        for line in BTOP_THEME.read_text().splitlines():
+            match = _BTOP_LINE.match(line.strip())
+            if match:
+                colors[match.group(2)] = match.group(4)
+    return colors
+
+
+def current_btop_colors():
+    if _btop["values"] is None:
+        _btop["values"] = read_btop_colors()
+    return _btop["values"]
+
+
+def _replace_btop_color(text, key, hex_color):
+    lines = text.splitlines(keepends=True)
+    for index, line in enumerate(lines):
+        body = line[:-1] if line.endswith("\n") else line
+        match = _BTOP_LINE.match(body)
+        if not match or match.group(2) != key:
+            continue
+        old = match.group(4)
+        new = old if old.lower() == hex_color.lower() else hex_color
+        ending = "\n" if line.endswith("\n") else ""
+        lines[index] = f"{match.group(1)}{match.group(2)}{match.group(3)}{new}{match.group(5)}{ending}"
+        break
+    return "".join(lines)
+
+
+def apply_btop_colors():
+    if _btop["values"] is None or not BTOP_THEME.is_file():
+        return
+    original = BTOP_THEME.read_text()
+    updated = original
+    for key, value in _btop["values"].items():
+        updated = _replace_btop_color(updated, key, value)
+    if updated != original:
+        BTOP_THEME.write_text(updated)
+
+
 def apply_rofi_colors():
     if _rofi["values"] is None:
         return
