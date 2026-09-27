@@ -1,0 +1,13 @@
+rofi
+- app menu
+- buffer menu
+- power menu
+- wallpaper menu
+- ? theme menu (in progress)
+- ? script menu (in progress)
+
+picom
+dnust
+lockscreen
+polybar
+terminal

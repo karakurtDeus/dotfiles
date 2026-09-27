@@ -127,12 +127,17 @@ animations = ({
 });
 # /picom-panel-animations
 """
-_SQUARE_RULE = """  {
-    match = "class_g = 'Polybar' || class_g = 'Dunst'";
+_SQUARE_MATCH = (
+    "class_g = 'Polybar' || class_g = 'Dunst' || "
+    "(class_g = 'Rofi' && (name = 'rofi - wallpaper' || name = 'rofi - powermenu'))"
+)
+_SQUARE_RULE = f"""  {{
+    match = "{_SQUARE_MATCH}";
     corner-radius = 0;
-  },
+  }},
 """
-_picom = {"values": None}
+_picom = {"values": None, "apps": None}
+_OPACITY_BLOCK = re.compile(r"\n?# picom-panel-opacity\n.*?# /picom-panel-opacity\n?", re.S)
 
 
 def _picom_scalar(text, key):
@@ -170,7 +175,100 @@ def read_picom_settings():
         "animations": "# picom-panel-animations" in text,
         "backend": (_picom_scalar(text, "backend") or '"glx"').strip().strip('"'),
         "vsync": _picom_scalar(text, "vsync") != "false",
+        **_read_opacity(text),
     }
+
+
+def _read_opacity(text):
+    match = _OPACITY_BLOCK.search(text)
+    body = match.group(0) if match else ""
+    amount = 80
+    amount_match = re.search(r"(?m)^# amount = (\d+);", body)
+    if amount_match:
+        amount = int(amount_match.group(1))
+    exclude = re.findall(r"(?m)^# exclude = (.+);", body)
+    enabled = bool(re.search(r"(?m)^# enabled = true;", body))
+    return {
+        "opacity_enabled": enabled,
+        "opacity": min(100, max(15, amount)),
+        "opacity_exclude": exclude,
+    }
+
+
+def system_apps():
+    if _picom["apps"] is None:
+        apps = {}
+        data_home = os.environ.get("XDG_DATA_HOME", str(Path.home() / ".local/share"))
+        data_dirs = os.environ.get("XDG_DATA_DIRS", "/usr/local/share:/usr/share").split(":")
+        for base in [data_home, *data_dirs]:
+            directory = Path(base) / "applications"
+            if not directory.is_dir():
+                continue
+            for path in directory.glob("*.desktop"):
+                name = wm_class = exec_name = None
+                hidden = False
+                for line in path.read_text(errors="replace").splitlines():
+                    if line.startswith("["):
+                        if line.strip() != "[Desktop Entry]":
+                            break
+                        continue
+                    if line.startswith("Name=") and name is None:
+                        name = line.split("=", 1)[1].strip()
+                    elif line.startswith("StartupWMClass="):
+                        wm_class = line.split("=", 1)[1].strip()
+                    elif line.startswith("Exec=") and exec_name is None:
+                        parts = [part for part in line.split("=", 1)[1].split() if not part.startswith("%")]
+                        if parts:
+                            exec_name = Path(parts[0]).name
+                    elif line in ("NoDisplay=true", "Hidden=true"):
+                        hidden = True
+                if hidden or not name:
+                    continue
+                klass = wm_class or (name if " " not in name else exec_name)
+                if klass:
+                    apps.setdefault(klass, name)
+        for klass, name in (("Polybar", "Polybar"), ("Dunst", "Dunst"), ("Rofi", "Rofi")):
+            apps.setdefault(klass, name)
+        _picom["apps"] = sorted(
+            ((name if name == klass else f"{name} ({klass})", klass) for klass, name in apps.items()),
+            key=lambda item: item[0].casefold(),
+        )
+    return _picom["apps"]
+
+
+def _class_match(klass):
+    safe = klass.replace("\\", "\\\\").replace("'", "\\'")
+    return f"(class_g ?= '{safe}' || class_i ?= '{safe}')"
+
+
+def _opacity_block(settings):
+    if not settings["opacity_enabled"] and not settings["opacity_exclude"] and int(settings["opacity"]) == 80:
+        return ""
+    amount = min(100, max(15, int(settings["opacity"])))
+    enabled = "true" if settings["opacity_enabled"] else "false"
+    lines = ["# picom-panel-opacity", f"# enabled = {enabled};", f"# amount = {amount};"]
+    for klass in settings["opacity_exclude"]:
+        lines.append(f"# exclude = {klass};")
+    if settings["opacity_enabled"]:
+        excluded = " && ".join(f"!{_class_match(klass)}" for klass in settings["opacity_exclude"])
+        general = "window_type != 'desktop'"
+        if excluded:
+            general = f"{general} && {excluded}"
+        lines.extend([
+            "  {",
+            f'    match = "{general}";',
+            f"    opacity = {amount / 100:.2f};",
+            "  },",
+        ])
+        for klass in settings["opacity_exclude"]:
+            lines.extend([
+                "  {",
+                f'    match = "{_class_match(klass)}";',
+                "    opacity = 1.0;",
+                "  },",
+            ])
+    lines.append("# /picom-panel-opacity")
+    return "\n".join(lines) + "\n"
 
 
 def picom_config_text(text, settings):
@@ -205,11 +303,22 @@ def picom_config_text(text, settings):
         text += _PICOM_ANIMATIONS
     text = text.replace(
         'match = "class_g = \'Polybar\'";',
+        f'match = "{_SQUARE_MATCH}";',
+        1,
+    )
+    text = text.replace(
         'match = "class_g = \'Polybar\' || class_g = \'Dunst\'";',
+        f'match = "{_SQUARE_MATCH}";',
         1,
     )
     if "class_g = 'Dunst'" not in text:
         text = text.replace("rules: (", "rules: (\n" + _SQUARE_RULE, 1)
+    text = _OPACITY_BLOCK.sub("\n", text)
+    block = _opacity_block(settings)
+    if block:
+        text = text.replace("rules: (", "rules: (\n" + block, 1)
+    text = re.sub(r"(rules: \()\n(?:[ \t]*\n)+", r"\1\n", text, count=1)
+    text = re.sub(r"(# /picom-panel-opacity)\n(?:[ \t]*\n)+", r"\1\n", text, count=1)
     return text
 
 

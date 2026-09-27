@@ -211,6 +211,8 @@ def appearance_panel():
         "Fading:",
         "Blur:",
         "Animations:",
+        "Opacity:",
+        "Level:",
     ]
     backends = ["glx", "egl", "xrender"]
     label_width = max(imgui.calc_text_size(label).x for label in picom_labels)
@@ -249,6 +251,37 @@ def appearance_panel():
     edit_picom("Fading:", "fading", lambda v: imgui.slider_int("##fading", v, 0, 100))
     edit_picom("Blur:", "blur", lambda v: imgui.checkbox("##blur", v), live=True)
     edit_picom("Animations:", "animations", lambda v: imgui.checkbox("##animations", v), live=True)
+    edit_picom("Opacity:", "opacity_enabled", lambda v: imgui.checkbox("##opacity", v), live=True)
+    edit_picom("Level:", "opacity", lambda v: imgui.slider_int("##opacity-level", v, 15, 100))
+
+    apps = system_apps()
+    labels = [label for label, _klass in apps]
+    if not hasattr(appearance_panel, "exclude_index"):
+        appearance_panel.exclude_index = 0
+    imgui.text_colored(GUI_ACCENT, "Exclude:")
+    imgui.same_line()
+    imgui.set_cursor_pos_x(origin_x + label_width + gap)
+    imgui.set_next_item_width(220)
+    if labels:
+        appearance_panel.exclude_index = min(appearance_panel.exclude_index, len(labels) - 1)
+        _changed, appearance_panel.exclude_index = imgui.combo(
+            "##opacity-exclude",
+            appearance_panel.exclude_index,
+            labels,
+            12,
+        )
+        imgui.same_line()
+        if imgui.button("Add"):
+            klass = apps[appearance_panel.exclude_index][1]
+            if klass not in settings["opacity_exclude"]:
+                settings["opacity_exclude"].append(klass)
+                apply_picom_settings()
+    for klass in list(settings["opacity_exclude"]):
+        imgui.text_colored(GUI_TEXT, klass)
+        imgui.same_line()
+        if imgui.button(f"Remove##{klass}"):
+            settings["opacity_exclude"].remove(klass)
+            apply_picom_settings()
 
     imgui.new_line()
     imgui.push_font(None, imgui.get_style().font_size_base * 1.2)
