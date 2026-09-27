@@ -143,6 +143,57 @@ def cheatsheet_panel():
     imgui.pop_font()
 
     imgui.push_font(None, imgui.get_style().font_size_base * 1.2)
+    imgui.text_colored(GUI_ACCENT, "Rofi")
+    imgui.pop_font()
+
+    imgui.new_line()
+
+    rows = [
+        ("App manager:", "super + space"),
+        ("Buffer manager:", "super + v"),
+        ("Power menu:", "super + ctrl + p"),
+        ("Wallpaper selector:", "super + ctrl + w"),
+        ("Script manager:", "super + ctrl + space"),
+    ]
+    label_width = max(imgui.calc_text_size(label).x for label, _ in rows)
+    gap = imgui.calc_text_size("    ").x
+    origin_x = imgui.get_cursor_pos_x()
+
+    for label, value in rows:
+        imgui.text_colored(GUI_ACCENT, label)
+        imgui.same_line()
+        imgui.set_cursor_pos_x(origin_x + label_width + gap)
+        imgui.text(str(value))
+
+    imgui.new_line()
+    imgui.new_line()
+
+    imgui.push_font(None, imgui.get_style().font_size_base * 1.2)
+    imgui.text_colored(GUI_ACCENT, "General")
+    imgui.pop_font()
+
+    imgui.new_line()
+
+    rows = [
+        ("Reload bspwm:", "super + alt + r"),
+        ("Reload sxhkd:", "super + Escape"),
+        ("File manager:", "super + e"),
+        ("Terminal:", "super + Enter"),
+    ]
+    label_width = max(imgui.calc_text_size(label).x for label, _ in rows)
+    gap = imgui.calc_text_size("    ").x
+    origin_x = imgui.get_cursor_pos_x()
+
+    for label, value in rows:
+        imgui.text_colored(GUI_ACCENT, label)
+        imgui.same_line()
+        imgui.set_cursor_pos_x(origin_x + label_width + gap)
+        imgui.text(str(value))
+
+    imgui.new_line()
+    imgui.new_line()
+
+    imgui.push_font(None, imgui.get_style().font_size_base * 1.2)
     imgui.text_colored(GUI_ACCENT, "Quick settings")
     imgui.pop_font()
 
@@ -409,21 +460,277 @@ def appearance_panel():
         if imgui.is_item_deactivated_after_edit():
             apply_dunst_settings()
 
-def colors_panel():
-    title = "Colors"
+    kitty = current_kitty_settings()
+    if kitty["order"]:
+        imgui.new_line()
+        imgui.push_font(None, imgui.get_style().font_size_base * 1.2)
+        imgui.text_colored(GUI_ACCENT, "Kitty")
+        imgui.pop_font()
+        imgui.new_line()
 
+        kitty_labels = [KITTY_LABELS[key] for key in kitty["order"]]
+        label_width = max(imgui.calc_text_size(label).x for label in kitty_labels)
+        gap = imgui.calc_text_size("    ").x
+        origin_x = imgui.get_cursor_pos_x()
+
+        def kitty_control(label, width=True):
+            imgui.text_colored(GUI_ACCENT, label)
+            imgui.same_line()
+            imgui.set_cursor_pos_x(origin_x + label_width + gap)
+            if width:
+                imgui.set_next_item_width(300)
+
+        for key in kitty["order"]:
+            label = KITTY_LABELS[key]
+            value = kitty["values"][key]
+            wide = key not in ("enable_audio_bell", "window_alert_on_bell", "confirm_os_window_close")
+            kitty_control(label, wide)
+            if key in ("enable_audio_bell", "window_alert_on_bell", "confirm_os_window_close"):
+                enabled = kitty_yes(value) if key != "confirm_os_window_close" else kitty_confirm(value)
+                changed, enabled = imgui.checkbox(f"##kitty-{key}", enabled)
+                if changed:
+                    if key == "confirm_os_window_close":
+                        kitty["values"][key] = "1" if enabled else "0"
+                    else:
+                        kitty["values"][key] = "yes" if enabled else "no"
+                    apply_kitty_settings()
+            elif key in ("background", "foreground") and value.startswith("#") and len(value) == 7:
+                changed, color = imgui.color_edit3(
+                    f"##kitty-{key}",
+                    hex_to_color(value),
+                    imgui.ColorEditFlags_.display_hex | imgui.ColorEditFlags_.no_options,
+                )
+                if changed:
+                    kitty["values"][key] = color_to_hex(color)
+                if imgui.is_item_deactivated_after_edit():
+                    apply_kitty_settings()
+            elif key == "visual_bell_duration":
+                changed, seconds = imgui.slider_float(f"##kitty-{key}", kitty_seconds(value), 0.0, 10.0, "%.1f")
+                if changed:
+                    kitty["values"][key] = kitty_seconds_text(value, seconds)
+                if imgui.is_item_deactivated_after_edit():
+                    apply_kitty_settings()
+
+    theme = current_theme_colors()
+
+    def draw_theme_group(title, fields):
+        rows = [(key, label) for key, label in fields if key in theme]
+        if not rows:
+            return
+        imgui.new_line()
+        imgui.push_font(None, imgui.get_style().font_size_base * 1.2)
+        imgui.text_colored(GUI_ACCENT, title)
+        imgui.pop_font()
+        imgui.new_line()
+        label_width = max(imgui.calc_text_size(label).x for _key, label in rows)
+        gap = imgui.calc_text_size("    ").x
+        origin_x = imgui.get_cursor_pos_x()
+        for key, label in rows:
+            imgui.text_colored(GUI_ACCENT, label)
+            imgui.same_line()
+            imgui.set_cursor_pos_x(origin_x + label_width + gap)
+            imgui.set_next_item_width(300)
+            changed, color = imgui.color_edit3(
+                f"##theme-{key}",
+                hex_to_color(theme[key]),
+                imgui.ColorEditFlags_.display_hex | imgui.ColorEditFlags_.no_options,
+            )
+            if changed:
+                theme[key] = color_to_hex(color)
+            if imgui.is_item_deactivated_after_edit():
+                apply_theme_colors()
+                if key.startswith("control_panel_"):
+                    setup_style()
+
+    draw_theme_group("Lockscreen", LOCKSCREEN_FIELDS)
+    draw_theme_group("Control panel", PANEL_FIELDS)
+
+    rofi = current_rofi_colors()
+    if any(rofi["files"].values()):
+        imgui.new_line()
+        imgui.push_font(None, imgui.get_style().font_size_base * 1.2)
+        imgui.text_colored(GUI_ACCENT, "Rofi")
+        imgui.pop_font()
+        imgui.text_colored(GUI_TEXT, rofi["theme"])
+
+        def draw_rofi_group(title, name):
+            colors = rofi["files"].get(name, {})
+            rows = [(key, ROFI_LABELS[key]) for key in ROFI_LABELS if key in colors]
+            if not rows:
+                return
+            imgui.new_line()
+            imgui.text_colored(GUI_ACCENT, title)
+            imgui.new_line()
+            label_width = max(imgui.calc_text_size(label).x for _key, label in rows)
+            gap = imgui.calc_text_size("    ").x
+            origin_x = imgui.get_cursor_pos_x()
+            for key, label in rows:
+                imgui.text_colored(GUI_ACCENT, label)
+                imgui.same_line()
+                imgui.set_cursor_pos_x(origin_x + label_width + gap)
+                imgui.set_next_item_width(300)
+                changed, color = imgui.color_edit3(
+                    f"##rofi-{name}-{key}",
+                    hex_to_color(colors[key]),
+                    imgui.ColorEditFlags_.display_hex | imgui.ColorEditFlags_.no_options,
+                )
+                if changed:
+                    colors[key] = color_to_hex(color)
+                if imgui.is_item_deactivated_after_edit():
+                    apply_rofi_colors()
+
+        draw_rofi_group("Powermenu", "powermenu")
+        draw_rofi_group("Select", "select")
+        draw_rofi_group("Drun", "drun")
+
+def autostart_panel():
+    title = "Autostart"
     avail = imgui.get_content_region_avail().x
     text_width = imgui.calc_text_size(title).x
     imgui.set_cursor_pos_x(imgui.get_cursor_pos_x() + (avail - text_width) * 0.5)
     imgui.push_font(None, imgui.get_style().font_size_base * 1.4)
     imgui.text_colored(GUI_ACCENT, title)
     imgui.pop_font()
+    imgui.text_colored(GUI_TEXT, get_current_theme())
+    imgui.new_line()
 
-    imgui.push_font(None, imgui.get_style().font_size_base * 1.2)
-    imgui.text_colored(GUI_ACCENT, "BSPWM")
-    imgui.pop_font()
+    entries = current_autostart()
+    apps = desktop_apps()
+    if not hasattr(autostart_panel, "app_index"):
+        autostart_panel.app_index = 0
+        autostart_panel.window_index = 0
+        autostart_panel.url = ""
+        autostart_panel.windows = open_windows()
+        autostart_panel.desks = desktop_count()
+    windows = autostart_panel.windows
+    desks = autostart_panel.desks
+
+    labels = [app["name"] if app["name"] == app["class"] else f"{app['name']} ({app['class']})" for app in apps]
+    imgui.text_colored(GUI_ACCENT, "App:")
+    imgui.same_line()
+    imgui.set_next_item_width(280)
+    if labels:
+        autostart_panel.app_index = min(autostart_panel.app_index, len(labels) - 1)
+        _changed, autostart_panel.app_index = imgui.combo("##autostart-app", autostart_panel.app_index, labels, 12)
+        imgui.same_line()
+        if imgui.button("Add"):
+            app = apps[autostart_panel.app_index]
+            if not any(entry["class"] == app["class"] and not entry["url"] for entry in entries):
+                entries.append({
+                    "class": app["class"],
+                    "exec": app["exec"],
+                    "url": "",
+                    "desktop": 1,
+                    "floating": False,
+                    "x": 0,
+                    "y": 0,
+                    "w": 0,
+                    "h": 0,
+                    "sw": 0,
+                    "sh": 0,
+                })
+                save_autostart()
+
+    imgui.text_colored(GUI_ACCENT, "Link:")
+    imgui.same_line()
+    imgui.set_next_item_width(280)
+    _changed, autostart_panel.url = imgui.input_text("##autostart-url", autostart_panel.url)
+    imgui.same_line()
+    if imgui.button("Add##link") and autostart_panel.url.strip():
+        entries.append({
+            "class": "",
+            "exec": "",
+            "url": autostart_panel.url.strip(),
+            "desktop": 1,
+            "floating": False,
+            "x": 0,
+            "y": 0,
+            "w": 0,
+            "h": 0,
+            "sw": 0,
+            "sh": 0,
+        })
+        autostart_panel.url = ""
+        save_autostart()
+
+    window_labels = []
+    for window in windows:
+        name = window.get("title") or window["class"]
+        if len(name) > 48:
+            name = name[:45] + "..."
+        window_labels.append(
+            f"{name}  {window['desktop']}  {'floating' if window['floating'] else 'tiled'}"
+        )
+    if window_labels:
+        imgui.text_colored(GUI_ACCENT, "Window:")
+        imgui.same_line()
+        imgui.set_next_item_width(280)
+        autostart_panel.window_index = min(autostart_panel.window_index, len(window_labels) - 1)
+        _changed, autostart_panel.window_index = imgui.combo(
+            "##autostart-window", autostart_panel.window_index, window_labels, 8
+        )
+        imgui.same_line()
+        if imgui.button("Refresh"):
+            autostart_panel.windows = open_windows()
+            autostart_panel.desks = desktop_count()
+        imgui.same_line()
+        if imgui.button("Capture"):
+            entry = entry_from_window(windows[autostart_panel.window_index])
+            replaced = False
+            for index, current in enumerate(entries):
+                if not current["class"] or current["class"] != entry["class"]:
+                    continue
+                if current["desktop"] != entry["desktop"]:
+                    continue
+                current_title = current.get("title") or ""
+                if current_title in ("", entry.get("title") or ""):
+                    entries[index] = entry
+                    replaced = True
+                    break
+            if not replaced:
+                entries.append(entry)
+            save_autostart()
 
     imgui.new_line()
+    for index, entry in enumerate(list(entries)):
+        title = entry["url"] or entry.get("title") or entry["class"] or entry["exec"]
+        imgui.text_colored(GUI_ACCENT, title)
+        if entry["exec"] and not entry["url"]:
+            imgui.same_line()
+            imgui.text_colored(GUI_TEXT, entry["exec"])
+        imgui.same_line()
+        if imgui.button(f"Remove##autostart-{index}"):
+            entries.pop(index)
+            save_autostart()
+            continue
+        imgui.text_colored(GUI_ACCENT, "Desktop:")
+        imgui.same_line()
+        imgui.set_next_item_width(120)
+        changed, desk = imgui.slider_int(f"##autostart-desk-{index}", int(entry["desktop"]), 1, desks)
+        if changed:
+            entry["desktop"] = desk
+        if imgui.is_item_deactivated_after_edit():
+            save_autostart()
+        imgui.same_line()
+        changed, floating = imgui.checkbox(f"Floating##autostart-{index}", entry["floating"])
+        if changed:
+            entry["floating"] = floating
+            save_autostart()
+        if entry["floating"]:
+            for key, label in (("x", "X"), ("y", "Y"), ("w", "W"), ("h", "H")):
+                imgui.text_colored(GUI_ACCENT, f"{label}:")
+                imgui.same_line()
+                imgui.set_next_item_width(90)
+                changed, value = imgui.input_int(f"##autostart-{key}-{index}", int(entry[key]))
+                if changed:
+                    entry[key] = value
+                if imgui.is_item_deactivated_after_edit():
+                    save_autostart()
+                imgui.same_line()
+            if entry.get("sw") and entry.get("sh"):
+                imgui.text_colored(GUI_TEXT, f"{int(entry['sw'])}x{int(entry['sh'])}")
+            imgui.new_line()
+
 
 def main():
 
@@ -459,7 +766,7 @@ def main():
     windows = [
         ("Control Panel", control_panel),
         ("Appearance", appearance_panel),
-        ("Colors", colors_panel),
+        ("Autostart", autostart_panel),
         ("Cheatsheet", cheatsheet_panel),
     ]
 

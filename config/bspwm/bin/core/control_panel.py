@@ -1,9 +1,11 @@
+import ctypes
 import getpass
 
 def return_username():
     return getpass.getuser()
 
 from pathlib import Path
+import json
 import os
 import pwd
 import re
@@ -649,3 +651,453 @@ def apply_dunst_settings():
         return
     DUNST_CONF.write_text(updated)
     reload_dunst()
+
+
+KITTY_CONF = Path.home() / ".config/kitty/kitty.conf"
+_kitty = {"values": None}
+KITTY_LABELS = {
+    "confirm_os_window_close": "Confirm close:",
+    "enable_audio_bell": "Audio bell:",
+    "visual_bell_duration": "Visual bell:",
+    "window_alert_on_bell": "Window alert:",
+    "background": "Background:",
+    "foreground": "Foreground:",
+}
+
+
+def _kitty_entries(text):
+    entries = []
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        parts = stripped.split(None, 1)
+        key = parts[0]
+        value = parts[1] if len(parts) > 1 else ""
+        entries.append((key, value))
+    return entries
+
+
+def read_kitty_settings():
+    text = KITTY_CONF.read_text() if KITTY_CONF.is_file() else ""
+    values = {}
+    order = []
+    for key, value in _kitty_entries(text):
+        if key not in KITTY_LABELS:
+            continue
+        if key not in order:
+            order.append(key)
+        values[key] = value
+    return {"order": order, "values": values}
+
+
+def kitty_yes(value):
+    return value.strip().lower() in ("yes", "y", "true", "on", "1")
+
+
+def kitty_confirm(value):
+    token = value.split(None, 1)[0] if value.strip() else "0"
+    try:
+        return int(token) != 0
+    except ValueError:
+        return False
+
+
+def kitty_seconds(value):
+    token = value.split(None, 1)[0] if value.strip() else "0"
+    try:
+        return float(token)
+    except ValueError:
+        return 0.0
+
+
+def kitty_seconds_text(value, seconds):
+    rest = value.split()[1:]
+    if abs(seconds - round(seconds)) < 0.05:
+        rendered = str(int(round(seconds)))
+    else:
+        rendered = f"{seconds:.1f}"
+    if rest:
+        return rendered + " " + " ".join(rest)
+    return rendered
+
+
+def replace_kitty_key(text, key, value):
+    lines = text.splitlines(keepends=True)
+    target = None
+    for index, line in enumerate(lines):
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        if stripped.split(None, 1)[0] == key:
+            target = index
+    if target is None:
+        return text
+    raw = lines[target]
+    indent = raw[: len(raw) - len(raw.lstrip(" \t"))]
+    ending = "\n" if raw.endswith("\n") else ""
+    lines[target] = f"{indent}{key} {value}{ending}"
+    return "".join(lines)
+
+
+def kitty_config_text(text, settings):
+    for key in settings["order"]:
+        text = replace_kitty_key(text, key, settings["values"][key])
+    return text
+
+
+def reload_kitty():
+    subprocess.run(["pkill", "-USR1", "-x", "kitty"], check=False)
+
+
+def current_kitty_settings():
+    if _kitty["values"] is None:
+        _kitty["values"] = read_kitty_settings()
+    return _kitty["values"]
+
+
+def apply_kitty_settings():
+    if _kitty["values"] is None or not KITTY_CONF.is_file():
+        return
+    original = KITTY_CONF.read_text()
+    updated = kitty_config_text(original, _kitty["values"])
+    if updated == original:
+        return
+    KITTY_CONF.write_text(updated)
+    reload_kitty()
+
+
+_launchers = None
+_autostart = {"entries": None}
+
+
+def autostart_path():
+    return Path.home() / ".config" / "bspwm" / "rices" / get_current_theme() / "config" / "autostart"
+
+
+def desktop_apps():
+    global _launchers
+    if _launchers is not None:
+        return _launchers
+    apps = []
+    seen = set()
+    data_home = os.environ.get("XDG_DATA_HOME", str(Path.home() / ".local/share"))
+    data_dirs = os.environ.get("XDG_DATA_DIRS", "/usr/local/share:/usr/share").split(":")
+    for base in [data_home, *data_dirs]:
+        directory = Path(base) / "applications"
+        if not directory.is_dir():
+            continue
+        for path in directory.glob("*.desktop"):
+            name = wm_class = exec_name = None
+            hidden = False
+            for line in path.read_text(errors="replace").splitlines():
+                if line.startswith("["):
+                    if line.strip() != "[Desktop Entry]":
+                        break
+                    continue
+                if line.startswith("Name=") and name is None:
+                    name = line.split("=", 1)[1].strip()
+                elif line.startswith("StartupWMClass="):
+                    wm_class = line.split("=", 1)[1].strip()
+                elif line.startswith("Exec=") and exec_name is None:
+                    raw = line.split("=", 1)[1].strip().strip('"')
+                    parts = [part.strip('"') for part in raw.split() if part and not part.startswith("%")]
+                    if parts:
+                        exec_name = Path(parts[0]).name
+                elif line in ("NoDisplay=true", "Hidden=true"):
+                    hidden = True
+            if hidden or not name or not exec_name:
+                continue
+            klass = wm_class or (name if " " not in name else exec_name)
+            if klass in seen:
+                continue
+            seen.add(klass)
+            apps.append({"name": name, "class": klass, "exec": exec_name})
+    _launchers = sorted(apps, key=lambda app: app["name"].casefold())
+    return _launchers
+
+
+def launcher_for(class_name, instance):
+    for app in desktop_apps():
+        if app["class"] == class_name:
+            return app
+    for app in desktop_apps():
+        if app["exec"] in (instance, class_name):
+            return app
+    return None
+
+
+def _autostart_number(value, default=0):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _autostart_field(value):
+    text = "" if value is None else str(value)
+    return text if text else "-"
+
+
+def _autostart_text(value):
+    return "" if value == "-" else value
+
+
+def read_autostart():
+    path = autostart_path()
+    entries = []
+    if not path.is_file():
+        return entries
+    for line in path.read_text().splitlines():
+        if not line.strip() or line.startswith("#"):
+            continue
+        parts = line.split("\t")
+        parts += [""] * (12 - len(parts))
+        entries.append({
+            "class": _autostart_text(parts[0]),
+            "exec": _autostart_text(parts[1]),
+            "url": _autostart_text(parts[2]),
+            "desktop": max(1, _autostart_number(parts[3], 1)),
+            "floating": parts[4] == "1",
+            "x": _autostart_number(parts[5]),
+            "y": _autostart_number(parts[6]),
+            "w": _autostart_number(parts[7]),
+            "h": _autostart_number(parts[8]),
+            "sw": _autostart_number(parts[9]),
+            "sh": _autostart_number(parts[10]),
+            "title": _autostart_text(parts[11]).replace("\t", " "),
+        })
+    return entries
+
+
+def current_autostart():
+    if _autostart["entries"] is None:
+        _autostart["entries"] = read_autostart()
+    return _autostart["entries"]
+
+
+def save_autostart():
+    if _autostart["entries"] is None:
+        return
+    path = autostart_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    lines = ["# class\texec\turl\tdesktop\tfloating\tx\ty\tw\th\tsw\tsh\ttitle"]
+    for entry in _autostart["entries"]:
+        lines.append("\t".join([
+            _autostart_field(entry["class"]),
+            _autostart_field(entry["exec"]),
+            _autostart_field(entry["url"]),
+            str(int(entry["desktop"])),
+            "1" if entry["floating"] else "0",
+            str(int(entry["x"])),
+            str(int(entry["y"])),
+            str(int(entry["w"])),
+            str(int(entry["h"])),
+            str(int(entry.get("sw") or 0)),
+            str(int(entry.get("sh") or 0)),
+            _autostart_field((entry.get("title") or "").replace("\t", " ")),
+        ]))
+    path.write_text("\n".join(lines) + "\n")
+
+
+def desktop_count():
+    try:
+        names = subprocess.check_output(["bspc", "query", "-D", "--names"], text=True).split()
+    except (OSError, subprocess.CalledProcessError):
+        return 1
+    return max(1, len(names))
+
+
+def open_windows():
+    try:
+        ids = subprocess.check_output(["bspc", "query", "-N", "-n", ".window"], text=True).split()
+        desks = subprocess.check_output(["bspc", "query", "-D"], text=True).split()
+    except (OSError, subprocess.CalledProcessError):
+        return []
+    windows = []
+    monitors = {}
+    for node_id in ids:
+        try:
+            node = json.loads(subprocess.check_output(["bspc", "query", "-T", "-n", node_id], text=True))
+            desk_id = subprocess.check_output(["bspc", "query", "-D", "-n", node_id], text=True).strip()
+            mon_id = subprocess.check_output(["bspc", "query", "-M", "-n", node_id], text=True).strip()
+            if mon_id not in monitors:
+                mon = json.loads(subprocess.check_output(["bspc", "query", "-T", "-m", mon_id], text=True))
+                monitors[mon_id] = mon.get("rectangle") or {}
+        except (OSError, subprocess.CalledProcessError, json.JSONDecodeError):
+            continue
+        client = node.get("client") or {}
+        if not client.get("className"):
+            continue
+        rect = node.get("rectangle") or {}
+        screen = monitors.get(mon_id) or {}
+        try:
+            title = subprocess.check_output(
+                ["xdotool", "getwindowname", node_id], text=True, stderr=subprocess.DEVNULL
+            ).strip().replace("\t", " ")
+        except (OSError, subprocess.CalledProcessError):
+            title = ""
+        windows.append({
+            "class": client["className"],
+            "instance": client.get("instanceName") or "",
+            "title": title,
+            "floating": client.get("state") == "floating",
+            "desktop": desks.index(desk_id) + 1 if desk_id in desks else 1,
+            "x": int(rect.get("x", 0)) - int(screen.get("x", 0)),
+            "y": int(rect.get("y", 0)) - int(screen.get("y", 0)),
+            "w": int(rect.get("width", 0)),
+            "h": int(rect.get("height", 0)),
+            "sw": int(screen.get("width", 0)),
+            "sh": int(screen.get("height", 0)),
+        })
+    return windows
+
+
+def _firefox_roots():
+    roots = []
+    for base in (Path.home() / ".mozilla" / "firefox", Path.home() / ".config" / "mozilla" / "firefox"):
+        if (base / "profiles.ini").is_file():
+            roots.append(base)
+    return roots
+
+
+def _firefox_recovery_files():
+    files = []
+    for root in _firefox_roots():
+        section = {}
+        sections = []
+        for line in (root / "profiles.ini").read_text(errors="replace").splitlines():
+            line = line.strip()
+            if line.startswith("[") and line.endswith("]"):
+                if section:
+                    sections.append(section)
+                section = {}
+                continue
+            if "=" in line:
+                key, value = line.split("=", 1)
+                section[key] = value
+        if section:
+            sections.append(section)
+        sections.sort(key=lambda item: item.get("Default") != "1")
+        for item in sections:
+            raw = item.get("Path")
+            if not raw:
+                continue
+            profile = Path(raw) if item.get("IsRelative") == "0" else root / raw
+            for name in ("sessionstore-backups/recovery.jsonlz4", "sessionstore.jsonlz4"):
+                path = profile / name
+                if path.is_file():
+                    files.append(path)
+    return files
+
+
+def _read_mozlz4(path):
+    try:
+        data = Path(path).read_bytes()
+    except OSError:
+        return None
+    if not data.startswith(b"mozLz40\x00"):
+        return None
+    payload = data[8:]
+    if len(payload) < 4:
+        return None
+    size = int.from_bytes(payload[:4], "little")
+    if size <= 0 or size > 64_000_000:
+        return None
+    try:
+        lib = ctypes.CDLL("liblz4.so.1")
+    except OSError:
+        return None
+    lib.LZ4_decompress_safe.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.c_int, ctypes.c_int]
+    lib.LZ4_decompress_safe.restype = ctypes.c_int
+    dest = ctypes.create_string_buffer(size)
+    read = lib.LZ4_decompress_safe(payload[4:], dest, len(payload) - 4, size)
+    if read < 1:
+        return None
+    try:
+        return json.loads(dest.raw[:read])
+    except json.JSONDecodeError:
+        return None
+
+
+def _session_pages(session):
+    pages = []
+
+    def take(windows):
+        history = []
+        for win in windows or []:
+            if not isinstance(win, dict):
+                continue
+            for tab in win.get("tabs") or []:
+                entries = tab.get("entries") or []
+                index = tab.get("index") or 0
+                for number, entry in enumerate(entries, start=1):
+                    url = entry.get("url") or ""
+                    title = entry.get("title") or ""
+                    if not title or not url.startswith(("http://", "https://")):
+                        continue
+                    item = (title, url)
+                    if number == index:
+                        pages.append(item)
+                    else:
+                        history.append(item)
+        pages.extend(history)
+
+    take(session.get("windows"))
+    last = session.get("lastSessionState") or {}
+    if isinstance(last, dict):
+        take(last.get("windows"))
+    take(session.get("_closedWindows"))
+    if isinstance(last, dict):
+        take(last.get("_closedWindows"))
+    return pages
+
+
+def firefox_url(title):
+    page = title or ""
+    for suffix in (
+        " — Mozilla Firefox (Private Browsing)",
+        " — Mozilla Firefox",
+        " - Mozilla Firefox (Private Browsing)",
+        " - Mozilla Firefox",
+    ):
+        if page.endswith(suffix):
+            page = page[: -len(suffix)]
+            break
+    page = page.strip()
+    if not page:
+        return ""
+    for path in _firefox_recovery_files():
+        session = _read_mozlz4(path)
+        if not session:
+            continue
+        for tab_title, url in _session_pages(session):
+            if tab_title == page:
+                return url
+    return ""
+
+
+def entry_from_window(window):
+    app = launcher_for(window["class"], window["instance"])
+    exec_name = app["exec"] if app else window["instance"]
+    url = firefox_url(window.get("title") or "") if exec_name == "firefox" or window["class"] == "firefox" else ""
+    return {
+        "class": window["class"],
+        "exec": exec_name,
+        "url": url,
+        "title": window.get("title") or "",
+        "desktop": window["desktop"],
+        "floating": window["floating"],
+        "x": window["x"],
+        "y": window["y"],
+        "w": window["w"],
+        "h": window["h"],
+        "sw": window.get("sw", 0),
+        "sh": window.get("sh", 0),
+    }
+
+
+def run_autostart():
+    script = Path.home() / ".config" / "bspwm" / "bin" / "autostart.sh"
+    if script.is_file():
+        subprocess.Popen([str(script)], start_new_session=True)
