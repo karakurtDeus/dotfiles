@@ -34,6 +34,10 @@ top=$(( (mon_h - btn) / 2 ))
 [ "$side" -lt 0 ] && side=0
 [ "$top" -lt 0 ] && top=0
 
+"$HOME/.config/bspwm/bin/hideCursor.sh" &
+cursor_hide=$!
+trap 'kill "$cursor_hide" 2>/dev/null; wait "$cursor_hide" 2>/dev/null' EXIT
+
 chosen=$(
   printf '%s\n%s\n%s\n%s\n' "$lock" "$logout" "$reboot" "$poweroff" | rofi -dmenu -i -window-title powermenu \
     -config "$HOME/.config/bspwm/rices/$RICE/rofi/powermenu.rasi" \
@@ -42,6 +46,9 @@ chosen=$(
     -theme-str "element { padding: ${pad_v}px 0px; border: ${border}px; border-radius: ${radius}px; }" \
     -theme-str "element-text { font: \"JetBrainsMono NF ${font_px}\"; }"
 )
+kill "$cursor_hide" 2>/dev/null
+wait "$cursor_hide" 2>/dev/null
+trap - EXIT
 
 case "$chosen" in
 "$lock")

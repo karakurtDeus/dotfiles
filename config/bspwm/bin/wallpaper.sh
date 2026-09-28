@@ -80,6 +80,10 @@ thumb_of() {
   printf '%s\n' "$dest"
 }
 
+"$HOME/.config/bspwm/bin/hideCursor.sh" &
+cursor_hide=$!
+trap 'kill "$cursor_hide" 2>/dev/null; wait "$cursor_hide" 2>/dev/null' EXIT
+
 chosen=$(
   for file in "${walls[@]}"; do
     name=$(basename "$file")
@@ -95,6 +99,9 @@ chosen=$(
     -theme-str "element { spacing: ${text_gap}px; }" \
     -theme-str "element-icon { size: ${icon_px}px; border: ${border}px; border-radius: ${radius}px; }"
 )
+kill "$cursor_hide" 2>/dev/null
+wait "$cursor_hide" 2>/dev/null
+trap - EXIT
 
 [ -n "$chosen" ] || exit 0
 
