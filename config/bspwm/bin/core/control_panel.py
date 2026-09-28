@@ -662,6 +662,7 @@ KITTY_LABELS = {
     "window_alert_on_bell": "Window alert:",
     "background": "Background:",
     "foreground": "Foreground:",
+    "font_size": "Font size:",
 }
 
 
@@ -688,6 +689,9 @@ def read_kitty_settings():
         if key not in order:
             order.append(key)
         values[key] = value
+    if "font_size" not in values:
+        order.append("font_size")
+        values["font_size"] = "11"
     return {"order": order, "values": values}
 
 
@@ -732,7 +736,9 @@ def replace_kitty_key(text, key, value):
         if stripped.split(None, 1)[0] == key:
             target = index
     if target is None:
-        return text
+        if text and not text.endswith("\n"):
+            text += "\n"
+        return text + f"{key} {value}\n"
     raw = lines[target]
     indent = raw[: len(raw) - len(raw.lstrip(" \t"))]
     ending = "\n" if raw.endswith("\n") else ""

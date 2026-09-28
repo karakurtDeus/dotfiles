@@ -510,6 +510,12 @@ def appearance_panel():
                     kitty["values"][key] = kitty_seconds_text(value, seconds)
                 if imgui.is_item_deactivated_after_edit():
                     apply_kitty_settings()
+            elif key == "font_size":
+                changed, size = imgui.slider_int(f"##kitty-{key}", int(kitty_seconds(value)), 6, 32)
+                if changed:
+                    kitty["values"][key] = str(size)
+                if imgui.is_item_deactivated_after_edit():
+                    apply_kitty_settings()
 
     theme = current_theme_colors()
 

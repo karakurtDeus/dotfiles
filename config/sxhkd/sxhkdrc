@@ -34,6 +34,10 @@ super + v
 super + ctrl + w
   ~/.config/bspwm/bin/wallpaper.sh
 
+# Theme selector
+super + ctrl + t
+  ~/.config/bspwm/bin/themeManager.sh
+
 # lockscreen
 ctrl + super + p
   ~/.config/bspwm/bin/powermenu.sh

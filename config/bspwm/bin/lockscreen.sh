@@ -34,7 +34,7 @@ TEMP_IMAGE=/tmp/i3lock.png
 ffmpeg -y -loglevel quiet \
   -f x11grab -video_size "$(xdpyinfo | awk '/dimensions/{print $2}')" \
   -i "$DISPLAY" -vframes 1 \
-  -vf "gblur=sigma=20" \
+  -vf "gblur=sigma=20,drawbox=x=0:y=0:w=iw:h=ih:color=black@0.4:t=fill" \
   "$TEMP_IMAGE"
 
 i3lock -n --force-clock -i "$TEMP_IMAGE" --fill -e --indicator \
