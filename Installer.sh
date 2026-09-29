@@ -148,6 +148,11 @@ systemPkgs() {
     # notification
     "dunst"
 
+    # bluetooth
+    "bluez"
+    "bluez-utils"
+    "bluetui"
+
     # desktop portal
     "xdg-desktop-portal"
     "xdg-desktop-portal-gtk"
@@ -221,9 +226,6 @@ personalPkgs() {
       "wireguard-tools"
       "mpv"
       "steam"
-      "bluez"
-      "bluez-utils"
-      "bluetui"
       "obs-studio"
       "krita"
       "kdenlive"
@@ -484,7 +486,7 @@ installLazyvim() {
     fi
   fi
 
-  if cat >"$nvim_dir/lua/plugins/snacks.lua" <<'EOF'
+  if cat >"$nvim_dir/lua/plugins/snacks.lua" <<'EOF'; then
 return {
   "folke/snacks.nvim",
   opts = {
@@ -497,7 +499,6 @@ return {
   },
 }
 EOF
-  then
     echo "[OK]: snacks hidden files"
   else
     echo "[FAIL]: snacks hidden files"
