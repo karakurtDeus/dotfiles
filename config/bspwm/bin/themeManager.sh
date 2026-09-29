@@ -3,6 +3,16 @@
 RICE=$(cat "$HOME/.config/bspwm/rice")
 rice_root="$HOME/.config/bspwm/rices"
 
+configs=(
+  polybar
+  gtk-3.0
+  gtk-4.0
+  dunst
+  kitty
+  picom
+  btop
+)
+
 shopt -s nullglob
 dirs=("$rice_root"/*/)
 [ ${#dirs[@]} -gt 0 ] || exit 0
@@ -112,5 +122,37 @@ trap - EXIT
 [ -d "$rice_root/$chosen" ] || exit 1
 [ "$chosen" = "$RICE" ] && exit 0
 
+save_configs() {
+  local conf="$rice_root/$1/config" name live
+  mkdir -p "$conf"
+  for name in "${configs[@]}"; do
+    live="$HOME/.config/$name"
+    [ -d "$live" ] || continue
+    rm -rf "$conf/$name"
+    cp -a "$live" "$conf/$name"
+  done
+}
+
+load_configs() {
+  local to="$rice_root/$1/config" name
+  for name in "${configs[@]}"; do
+    rm -rf "$HOME/.config/$name"
+    [ -d "$to/$name" ] || continue
+    cp -a "$to/$name" "$HOME/.config/$name"
+  done
+}
+
+save_configs "$RICE"
+load_configs "$chosen"
 printf '%s\n' "$chosen" > "$HOME/.config/bspwm/rice"
+
+if pgrep -x picom >/dev/null; then
+  pkill -x picom
+  i=0
+  while pgrep -x picom >/dev/null && [ "$i" -lt 50 ]; do
+    sleep 0.05
+    i=$((i + 1))
+  done
+fi
+pkill -USR1 -x kitty 2>/dev/null || true
 bspc wm -r
