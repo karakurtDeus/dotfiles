@@ -241,6 +241,59 @@ def cheatsheet_panel():
     imgui.new_line()
 
     imgui.push_font(None, imgui.get_style().font_size_base * 1.2)
+    imgui.text_colored(GUI_ACCENT, "Kitty")
+    imgui.pop_font()
+
+    imgui.new_line()
+
+    rows = [
+        ("New split:", "ctrl + shift + enter"),
+        ("Next split:", "ctrl + shift + ]"),
+        ("Previous split:", "ctrl + shift + ["),
+        ("Resize split:", "ctrl + shift + r"),
+        ("Close split:", "ctrl + shift + w"),
+    ]
+    label_width = max(imgui.calc_text_size(label).x for label, _ in rows)
+    gap = imgui.calc_text_size("    ").x
+    origin_x = imgui.get_cursor_pos_x()
+
+    for label, value in rows:
+        imgui.text_colored(GUI_ACCENT, label)
+        imgui.same_line()
+        imgui.set_cursor_pos_x(origin_x + label_width + gap)
+        imgui.text(str(value))
+
+    imgui.new_line()
+    imgui.new_line()
+
+    imgui.push_font(None, imgui.get_style().font_size_base * 1.2)
+    imgui.text_colored(GUI_ACCENT, "Bspwm")
+    imgui.pop_font()
+
+    imgui.new_line()
+
+    rows = [
+        ("Focus:", "super + h j k l"),
+        ("Swap window:", "super + shift + h j k l"),
+        ("Place next:", "super + ctrl + h j k l"),
+        ("Place ratio:", "super + ctrl + 1-9"),
+        ("Grow:", "super + alt + h j k l"),
+        ("Shrink:", "super + alt + shift + h j k l"),
+    ]
+    label_width = max(imgui.calc_text_size(label).x for label, _ in rows)
+    gap = imgui.calc_text_size("    ").x
+    origin_x = imgui.get_cursor_pos_x()
+
+    for label, value in rows:
+        imgui.text_colored(GUI_ACCENT, label)
+        imgui.same_line()
+        imgui.set_cursor_pos_x(origin_x + label_width + gap)
+        imgui.text(str(value))
+
+    imgui.new_line()
+    imgui.new_line()
+
+    imgui.push_font(None, imgui.get_style().font_size_base * 1.2)
     imgui.text_colored(GUI_ACCENT, "General")
     imgui.pop_font()
 
@@ -566,7 +619,7 @@ def appearance_panel():
                     else:
                         kitty["values"][key] = "yes" if enabled else "no"
                     apply_kitty_settings()
-            elif key in ("background", "foreground") and value.startswith("#") and len(value) == 7:
+            elif key in ("background", "foreground", "active_border_color", "inactive_border_color") and value.startswith("#") and len(value) == 7:
                 changed, color = imgui.color_edit3(
                     f"##kitty-{key}",
                     hex_to_color(value),

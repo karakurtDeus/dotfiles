@@ -173,6 +173,7 @@ systemPkgs() {
     # just need xd
     "cmatrix"
     "cava"
+    "playerctl"
   )
   installPkgs "${listPkgs[@]}"
 

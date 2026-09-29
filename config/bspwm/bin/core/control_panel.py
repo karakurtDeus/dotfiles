@@ -773,6 +773,8 @@ KITTY_LABELS = {
     "window_alert_on_bell": "Window alert:",
     "background": "Background:",
     "foreground": "Foreground:",
+    "active_border_color": "Active border:",
+    "inactive_border_color": "Inactive border:",
     "font_size": "Font size:",
 }
 
@@ -803,6 +805,11 @@ def read_kitty_settings():
     if "font_size" not in values:
         order.append("font_size")
         values["font_size"] = "11"
+    foreground = values.get("foreground", "#DBD6DD")
+    for key in ("active_border_color", "inactive_border_color"):
+        if key not in values:
+            order.append(key)
+            values[key] = foreground
     return {"order": order, "values": values}
 
 
