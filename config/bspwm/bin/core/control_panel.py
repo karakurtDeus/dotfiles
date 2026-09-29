@@ -59,6 +59,117 @@ def open_kitty(command, hold=False):
     args.extend(command)
     subprocess.Popen(args, start_new_session=True)
 
+
+def backlight_path():
+    root = Path("/sys/class/backlight")
+    if not root.is_dir():
+        return None
+    for path in sorted(root.iterdir()):
+        if (path / "brightness").is_file() and (path / "max_brightness").is_file():
+            return path
+    return None
+
+
+def _percent(current, total):
+    if total <= 0:
+        return 0
+    return min(100, max(0, round(current * 100 / total)))
+
+
+def read_brightness():
+    path = backlight_path()
+    if path is None:
+        return None
+    try:
+        current = int((path / "brightness").read_text())
+        maximum = int((path / "max_brightness").read_text())
+    except (OSError, ValueError):
+        return None
+    return _percent(current, maximum)
+
+
+def set_brightness(percent):
+    path = backlight_path()
+    if path is None:
+        return
+    try:
+        maximum = int((path / "max_brightness").read_text())
+    except (OSError, ValueError):
+        return
+    value = min(maximum, max(1, round(int(percent) * maximum / 100)))
+    subprocess.run(
+        [
+            "busctl", "call",
+            "org.freedesktop.login1",
+            "/org/freedesktop/login1/session/auto",
+            "org.freedesktop.login1.Session",
+            "SetBrightness",
+            "ssu", "backlight", path.name, str(value),
+        ],
+        check=False,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+
+def _wpctl(*args):
+    try:
+        return subprocess.check_output(
+            ["wpctl", *args],
+            text=True,
+            stderr=subprocess.DEVNULL,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return ""
+
+
+def _parse_volume(text):
+    muted = "[MUTED]" in text
+    volume = 0.0
+    for token in text.split():
+        try:
+            volume = float(token)
+            break
+        except ValueError:
+            continue
+    return min(100, max(0, round(volume * 100))), muted
+
+
+def read_audio():
+    sink_volume, sink_mute = _parse_volume(_wpctl("get-volume", "@DEFAULT_AUDIO_SINK@"))
+    _source_volume, source_mute = _parse_volume(_wpctl("get-volume", "@DEFAULT_AUDIO_SOURCE@"))
+    return {
+        "volume": sink_volume,
+        "sink_mute": sink_mute,
+        "source_mute": source_mute,
+    }
+
+
+def set_volume(percent):
+    level = min(100, max(0, int(percent)))
+    subprocess.run(
+        ["wpctl", "set-mute", "@DEFAULT_AUDIO_SINK@", "0"],
+        check=False,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    subprocess.run(
+        ["wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", f"{level}%"],
+        check=False,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+
+def set_muted(target, muted):
+    node = "@DEFAULT_AUDIO_SINK@" if target == "sink" else "@DEFAULT_AUDIO_SOURCE@"
+    subprocess.run(
+        ["wpctl", "set-mute", node, "1" if muted else "0"],
+        check=False,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
 def get_current_theme():
     rice_file = os.path.expanduser("~/.config/bspwm/rice")
     if os.path.exists(rice_file):
@@ -131,7 +242,7 @@ animations = ({
 """
 _SQUARE_MATCH = (
     "class_g = 'Polybar' || class_g = 'Dunst' || "
-    "(class_g = 'Rofi' && (name = 'rofi - wallpaper' || name = 'rofi - powermenu'))"
+    "(class_g = 'Rofi' && (name = 'rofi - wallpaper' || name = 'rofi - powermenu' || name = 'rofi - theme'))"
 )
 _SQUARE_RULE = f"""  {{
     match = "{_SQUARE_MATCH}";

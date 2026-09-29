@@ -1,3 +1,5 @@
+import time
+
 from imgui_bundle import imgui, hello_imgui
 from control_panel import *
 from colors import *
@@ -64,6 +66,76 @@ def control_panel():
         imgui.same_line()
         imgui.set_cursor_pos_x(origin_x + label_width + gap)
         imgui.text_colored(GUI_TEXT, str(value))
+
+    imgui.new_line()
+    imgui.new_line()
+
+    imgui.push_font(None, imgui.get_style().font_size_base * 1.2)
+    imgui.text_colored(GUI_ACCENT, "Controls")
+    imgui.pop_font()
+    imgui.new_line()
+
+    if not hasattr(control_panel, "devices"):
+        control_panel.devices = {
+            "brightness": read_brightness(),
+            **read_audio(),
+        }
+        control_panel.devices_at = 0.0
+        control_panel.hold_devices = 0.0
+    devices = control_panel.devices
+    now = time.time()
+    slider_active = False
+
+    device_labels = ["Brightness:", "Volume:", "Mute audio:", "Mute microphone:"]
+    label_width = max(imgui.calc_text_size(label).x for label in device_labels)
+    gap = imgui.calc_text_size("    ").x
+    origin_x = imgui.get_cursor_pos_x()
+
+    def device_row(label):
+        imgui.text_colored(GUI_ACCENT, label)
+        imgui.same_line()
+        imgui.set_cursor_pos_x(origin_x + label_width + gap)
+
+    if devices["brightness"] is not None:
+        device_row("Brightness:")
+        imgui.set_next_item_width(220)
+        changed, level = imgui.slider_int("##brightness", int(devices["brightness"]), 1, 100)
+        if changed:
+            devices["brightness"] = level
+            set_brightness(level)
+            control_panel.hold_devices = now + 0.4
+        slider_active = slider_active or imgui.is_item_active()
+
+    device_row("Volume:")
+    imgui.set_next_item_width(220)
+    changed, level = imgui.slider_int("##volume", int(devices["volume"]), 0, 100)
+    if changed:
+        devices["volume"] = level
+        devices["sink_mute"] = False
+        set_volume(level)
+        control_panel.hold_devices = now + 0.4
+    slider_active = slider_active or imgui.is_item_active()
+
+    device_row("Mute audio:")
+    changed, muted = imgui.checkbox("##mute-audio", devices["sink_mute"])
+    if changed:
+        devices["sink_mute"] = muted
+        set_muted("sink", muted)
+        control_panel.hold_devices = now + 0.4
+
+    device_row("Mute microphone:")
+    changed, muted = imgui.checkbox("##mute-mic", devices["source_mute"])
+    if changed:
+        devices["source_mute"] = muted
+        set_muted("source", muted)
+        control_panel.hold_devices = now + 0.4
+
+    if not slider_active and now >= control_panel.hold_devices and now - control_panel.devices_at >= 0.4:
+        fresh_brightness = read_brightness()
+        if fresh_brightness is not None:
+            devices["brightness"] = fresh_brightness
+        devices.update(read_audio())
+        control_panel.devices_at = now
 
     imgui.new_line()
     imgui.new_line()

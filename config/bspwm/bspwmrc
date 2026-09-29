@@ -49,14 +49,10 @@ pgrep -x flameshot >/dev/null || flameshot &
 killall -q polybar
 polybar down-panel &
 
-# background
-rice_dir="$HOME/.config/bspwm/rices/$RICE"
-wall=$(find "$rice_dir" -maxdepth 1 -type f -name 'rice-wallpaper.*' 2>/dev/null | head -n 1)
-if [ -z "$wall" ]; then
-  pic_dir="$rice_dir/wallpapers"
-  wall=$(find "$pic_dir" -maxdepth 1 -type f -name 'main_*' 2>/dev/null | head -n 1)
-  if [ -z "$wall" ] && [ -f "$pic_dir/background.jpg" ]; then
-    wall="$pic_dir/background.jpg"
-  fi
+# background — rice-wallpaper.* is only the theme-menu preview
+pic_dir="$HOME/.config/bspwm/rices/$RICE/wallpapers"
+wall=$(find "$pic_dir" -maxdepth 1 -type f -name 'main_*' 2>/dev/null | head -n 1)
+if [ -z "$wall" ] && [ -f "$pic_dir/background.jpg" ]; then
+  wall="$pic_dir/background.jpg"
 fi
 [ -n "$wall" ] && feh --bg-fill "$wall" &

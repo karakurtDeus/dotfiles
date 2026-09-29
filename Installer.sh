@@ -231,6 +231,7 @@ personalPkgs() {
     installPkgs "${listPkgs[@]}"
     local listPkgs=(
       "cursor-bin"
+      "spotify"
     )
     installYayPkgs "${listPkgs[@]}"
     ;;
@@ -483,7 +484,7 @@ installLazyvim() {
     fi
   fi
 
-  if cat >"$nvim_dir/lua/plugins/snacks.lua" <<'EOF'; then
+  if cat >"$nvim_dir/lua/plugins/snacks.lua" <<'EOF'
 return {
   "folke/snacks.nvim",
   opts = {
@@ -496,6 +497,7 @@ return {
   },
 }
 EOF
+  then
     echo "[OK]: snacks hidden files"
   else
     echo "[FAIL]: snacks hidden files"
