@@ -12,7 +12,6 @@ listConfigDirs=(
   "dunst"
   "yazi"
   "kitty"
-  "xdg-terminals.list"
   "xfce4"
   "fontconfig"
   "picom"
@@ -24,6 +23,11 @@ listHomeFiles=(
   ".zshrc"
   ".p10k.zsh"
   ".Xresources"
+)
+
+listLocalShareFiles=(
+  "applications/nvim.desktop"
+  "applications/vim.desktop"
 )
 
 copyConfig() {
@@ -70,6 +74,20 @@ copyConfig() {
       exit 1
     fi
   done
+
+  for file in "${listLocalShareFiles[@]}"; do
+    if [ ! -f "$HOME/.local/share/$file" ]; then
+      echo "[OK]: $file skip"
+      continue
+    fi
+
+    if mkdir -p "./local/share/$(dirname "$file")" &>>log && cp "$HOME/.local/share/$file" "./local/share/$file" &>>log; then
+      echo "[OK]: $file copy"
+    else
+      echo "[FAIL]: $file copy"
+      exit 1
+    fi
+  done
 }
 
 updateConfig() {
@@ -108,6 +126,19 @@ updateConfig() {
       exit 1
     fi
   done
+
+  for file in "${listLocalShareFiles[@]}"; do
+    if mkdir -p "$HOME/.local/share/$(dirname "$file")" &>>log && cp "./local/share/$file" "$HOME/.local/share/$file" &>>log; then
+      echo "[OK]: cp new $file"
+    else
+      echo "[FAIL]: cp new $file"
+      exit 1
+    fi
+  done
+
+  if update-desktop-database "$HOME/.local/share/applications" &>>log; then
+    echo "[OK]: desktop database"
+  fi
 }
 
 case "$1" in

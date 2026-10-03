@@ -92,10 +92,11 @@ systemPkgs() {
 
     # terminal
     "kitty"
-    "xdg-terminal-exec"
 
     # file manager
     "thunar"
+    "gvfs"
+    "gvfs-smb"
 
     # launcher
     "rofi"
@@ -236,6 +237,7 @@ personalPkgs() {
     local listPkgs=(
       "cursor-bin"
       "spotify"
+      "winbox"
     )
     installYayPkgs "${listPkgs[@]}"
     ;;
@@ -521,6 +523,34 @@ EOF
   read
 }
 
+installFileHandlers() {
+  logo "File handlers"
+
+  local dir dest file
+  dir="$(dirname "$(realpath "$0")")"
+  dest="$HOME/.local/share/applications"
+
+  if mkdir -p "$dest"; then
+    echo "[OK]: applications dir"
+  else
+    echo "[FAIL]: applications dir"
+    exit 1
+  fi
+
+  for file in nvim.desktop vim.desktop; do
+    if cp "$dir/local/share/applications/$file" "$dest/$file"; then
+      echo "[OK]: $file"
+    else
+      echo "[FAIL]: $file"
+      exit 1
+    fi
+  done
+
+  if update-desktop-database "$dest" >/dev/null 2>&1; then
+    echo "[OK]: desktop database"
+  fi
+}
+
 ufwConfig() {
   logo "UFW config"
 
@@ -570,6 +600,7 @@ main() {
   nvidiaPkgs
   zshConfig
   installLazyvim
+  installFileHandlers
   ufwConfig
   exit 0
 }
