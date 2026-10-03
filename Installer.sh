@@ -92,6 +92,7 @@ systemPkgs() {
 
     # terminal
     "kitty"
+    "xdg-terminal-exec"
 
     # file manager
     "thunar"

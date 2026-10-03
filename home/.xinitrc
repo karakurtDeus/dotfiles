@@ -1,5 +1,6 @@
 #!/bin/bash
 
+export PATH="$HOME/.local/bin:$PATH"
 export XDG_SESSION_TYPE=x11
 export XDG_CURRENT_DESKTOP=bspwm
 export XDG_SESSION_DESKTOP=bspwm

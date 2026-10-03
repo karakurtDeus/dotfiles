@@ -12,6 +12,7 @@ listConfigDirs=(
   "dunst"
   "yazi"
   "kitty"
+  "xdg-terminals.list"
   "xfce4"
   "fontconfig"
   "picom"
