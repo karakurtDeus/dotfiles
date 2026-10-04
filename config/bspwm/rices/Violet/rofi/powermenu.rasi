@@ -1,6 +1,6 @@
 configuration {
     show-icons:                  false;
-    font:                        "JetBrainsMono NF 15";
+    font: "Liberation Sans 12";
 }
 
 * {

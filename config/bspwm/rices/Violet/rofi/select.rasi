@@ -2,7 +2,7 @@ configuration {
     modi:                        "drun";
     show-icons:                  true;
     drun-display-format:         "test";
-    font:                        "Liberation Sans 15";
+    font:                        "Liberation Sans 12";
 }
 
 * {
