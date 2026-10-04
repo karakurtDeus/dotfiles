@@ -174,7 +174,7 @@ configuration {
 * {
   bg: #161117;
   fg: #757176;
-  primary: #D9ADE8;
+  primary: #D6E4D4;
   disabled: #757176;
   /* Fallback. Each hotkey overrides this with -theme-str. */
   menu-title: "󱇪 Apps";

@@ -1,8 +1,19 @@
 #! /bin/sh
 
 # variables
-primary="#D9ADE8"
 RICE=$(cat "$HOME/.config/bspwm/rice")
+primary=$(awk -F '=' '
+  /^[[:space:]]*#/ { next }
+  {
+    gsub(/^[[:space:]]+|[[:space:]]+$/, "", $1)
+    if ($1 == "primary") {
+      value = $2
+      gsub(/^[[:space:]]+|[[:space:]]+$/, "", value)
+      print value
+      exit
+    }
+  }
+' "$HOME/.config/polybar/colors.ini")
 
 # hotkey
 pgrep -x sxhkd >/dev/null || sxhkd &

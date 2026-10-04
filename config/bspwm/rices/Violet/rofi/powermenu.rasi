@@ -6,7 +6,7 @@ configuration {
 * {
     bg: #161117;
     fg: #DBD6DD;
-    primary: #D9ADE8;
+    primary: #D6E4D4;
     disabled: #757176;
 }
 

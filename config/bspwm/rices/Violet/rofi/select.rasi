@@ -1,18 +1,19 @@
 configuration {
-    show-icons:                  false;
-    font:                        "JetBrainsMono NF 15";
+    modi:                        "drun";
+    show-icons:                  true;
+    drun-display-format:         "test";
+    font:                        "Liberation Sans 15";
 }
 
 * {
     bg: #161117;
     fg: #DBD6DD;
-    primary: #D9ADE8;
-    disabled: #757176;
+    primary: #D6E4D4;
 }
 
 window {
     enabled:                     true;
-    fullscreen:                  true;
+    fullscreen:                  false;
     location:                    center;
     anchor:                      center;
     transparency:                "real";
@@ -21,6 +22,7 @@ window {
     padding:                     0px;
     border:                      0px;
     border-radius:               0px;
+    border-color:                @bg;
     background-color:            #00000066;
 }
 
@@ -29,23 +31,28 @@ mainbox {
     children:                    [ "listview" ];
     background-color:            transparent;
     border:                      0px;
+    border-color:                @bg;
 }
 
 listview {
     enabled:                     true;
-    columns:                     4;
+    columns:                     6;
     lines:                       1;
-    spacing:                     24px;
-    padding:                     0px;
+    spacing:                     40px;
+    padding:                     20px;
     cycle:                       true;
     dynamic:                     false;
     scrollbar:                   false;
     layout:                      vertical;
     flow:                        horizontal;
+    reverse:                     false;
     fixed-height:                true;
     fixed-columns:               true;
+    cursor:                      "default";
     background-color:            transparent;
+    text-color:                  @bg;
     border:                      0px;
+    border-color:                @bg;
 }
 
 element,
@@ -53,12 +60,11 @@ element normal.normal,
 element alternate.normal {
     enabled:                     true;
     orientation:                 vertical;
-    children:                    [ "element-text" ];
-    spacing:                     0px;
+    children:                    [ "element-icon", "element-text" ];
+    spacing:                     8px;
     padding:                     0px;
-    border:                      3px;
-    border-radius:               18px;
-    border-color:                @disabled;
+    border:                      0px;
+    border-radius:               0px;
     cursor:                      pointer;
     background-color:            transparent;
     text-color:                  @fg;
@@ -70,6 +76,26 @@ element selected.active,
 element selected.urgent {
     background-color:            transparent;
     text-color:                  @primary;
+    border:                      0px;
+}
+
+element-icon {
+    size:                        30%;
+    squared:                     false;
+    cursor:                      inherit;
+    border:                      3px;
+    border-radius:               16px;
+    border-color:                transparent;
+    background-color:            transparent;
+    horizontal-align:            0.5;
+    vertical-align:              0.5;
+    expand:                      false;
+}
+
+element-icon selected,
+element-icon selected.normal,
+element-icon selected.active,
+element-icon selected.urgent {
     border-color:                @primary;
 }
 
@@ -79,7 +105,14 @@ element-text {
     padding:                     0px;
     cursor:                      inherit;
     background-color:            transparent;
-    text-color:                  inherit;
+    text-color:                  @fg;
     highlight:                   none;
     expand:                      false;
+}
+
+element-text selected,
+element-text selected.normal,
+element-text selected.active,
+element-text selected.urgent {
+    text-color:                  @primary;
 }
