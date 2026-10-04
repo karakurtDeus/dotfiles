@@ -6,9 +6,9 @@ configuration {
 }
 
 * {
-    bg: #161117;
-    fg: #DBD6DD;
-    primary: #D6E4D4;
+    bg: #1D2C22;
+    fg: #BECEBB;
+    primary: #65C0A6;
 }
 
 window {

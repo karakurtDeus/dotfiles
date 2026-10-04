@@ -69,7 +69,7 @@
     progress_bar_max_width = 300
 
     # Corner radius for the progress bar. 0 disables rounded corners.
-    progress_bar_corner_radius = 5
+    progress_bar_corner_radius = 0
 
     # Define which corners to round when drawing the progress bar. If progress_bar_corner_radius
     # is set to 0 this option will be ignored.
@@ -280,7 +280,7 @@
     # corners.
     # The radius will be automatically lowered if it exceeds half of the
     # notification height to avoid clipping text and/or icons.
-    corner_radius = 16
+    corner_radius = 7
 
     # Define which corners to round when drawing the window. If the corner radius
     # is set to 0 this option will be ignored.
@@ -361,7 +361,7 @@
     # IMPORTANT: colors have to be defined in quotation marks.
     # Otherwise the "#" and following would be interpreted as a comment.
     # Wayland: #RRGGBBAA — non-zero alpha so Hyprland blur is visible
-    background = "#161117"
+    background = "#1D2C22"
     foreground = "#9ece6a"
     frame_color = "#9ECE6A"
     timeout = 10
@@ -369,17 +369,17 @@
     default_icon = dialog-information
 
 [urgency_normal]
-    background = "#161117"
+    background = "#1D2C22"
     # foreground = "#ffffff"
-    foreground = "#D9ADE8"
-    frame_color = "#D9ADE8"
+    foreground = "#65C0A6"
+    frame_color = "#65C0A6"
     timeout = 10
     override_pause_level = 30
     # Icon for notifications with normal urgency
     default_icon = dialog-information
 
 [urgency_critical]
-    background = "#161117"
+    background = "#1D2C22"
     # foreground = "red"
     foreground = "#f7768e"
     frame_color = "#F7768E"
