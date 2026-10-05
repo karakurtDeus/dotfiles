@@ -231,7 +231,6 @@ personalPkgs() {
       "steam"
       "obs-studio"
       "krita"
-      "kdenlive"
     )
     installPkgs "${listPkgs[@]}"
     local listPkgs=(
