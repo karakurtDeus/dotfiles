@@ -1,5 +1,15 @@
 #!/bin/bash
 
 RICE=$(cat "$HOME/.config/bspwm/rice")
+width=$(bspc config border_width)
+color=$(bspc config focused_border_color)
 
-CM_LAUNCHER=rofi clipmenu -config "$HOME/.config/bspwm/rices/$RICE/rofi/drun.rasi" -p "Paste" -theme-str '* { menu-title: "Clipboard"; }'
+args=(-theme-str '* { menu-title: "󰅌 Clipboard"; }')
+if [ "$width" -gt 0 ] 2>/dev/null && [ -n "$color" ]; then
+  args+=(-theme-str "window { border: ${width}px; border-color: $color; }")
+fi
+
+launcher=$(sed -n 's/^launcher=//p' "$HOME/.config/bspwm/rices/$RICE/config/rofi")
+[ -n "$launcher" ] || launcher=drun2
+
+CM_LAUNCHER=rofi clipmenu -config "$HOME/.config/bspwm/rices/$RICE/rofi/${launcher}.rasi" -p "Paste" "${args[@]}"

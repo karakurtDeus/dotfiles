@@ -1,4 +1,5 @@
 import time
+from pathlib import Path
 
 from imgui_bundle import imgui, hello_imgui
 from control_panel import *
@@ -749,6 +750,46 @@ def appearance_panel():
         for title, fields in BTOP_GROUPS:
             draw_btop_group(title, fields)
 
+def launcher_config_path():
+    return Path.home() / ".config/bspwm/rices" / get_current_theme() / "config" / "rofi"
+
+
+def read_launcher():
+    path = launcher_config_path()
+    if path.is_file():
+        for line in path.read_text().splitlines():
+            if line.startswith("launcher="):
+                name = line.split("=", 1)[1].strip()
+                if name in ("drun", "drun2"):
+                    return name
+    return "drun2"
+
+
+def write_launcher(name):
+    path = launcher_config_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(f"launcher={name}\n")
+
+
+def launcher_panel():
+    title = "Launcher"
+    avail = imgui.get_content_region_avail().x
+    text_width = imgui.calc_text_size(title).x
+    imgui.set_cursor_pos_x(imgui.get_cursor_pos_x() + (avail - text_width) * 0.5)
+    imgui.push_font(None, imgui.get_style().font_size_base * 1.4)
+    imgui.text_colored(GUI_ACCENT, title)
+    imgui.pop_font()
+
+    imgui.new_line()
+    imgui.text_colored(GUI_TEXT, get_current_theme())
+    imgui.new_line()
+
+    current = read_launcher()
+    for name, label in (("drun", "Drun"), ("drun2", "Drun 2")):
+        if imgui.radio_button(label, current == name):
+            write_launcher(name)
+
+
 def autostart_panel():
     title = "Autostart"
     avail = imgui.get_content_region_avail().x
@@ -932,6 +973,7 @@ def main():
     windows = [
         ("Control Panel", control_panel),
         ("Appearance", appearance_panel),
+        ("Launcher", launcher_panel),
         ("Autostart", autostart_panel),
         ("Cheatsheet", cheatsheet_panel),
     ]

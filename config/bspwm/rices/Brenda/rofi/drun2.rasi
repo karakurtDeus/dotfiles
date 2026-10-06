@@ -214,14 +214,30 @@ scrollbar {
 }
 
 window {
-  width:  262px;
+  width:  712px;
   height: 600px;
   border: 0;
   border-radius: 16px;
-  padding: 20px 25px;
+  padding: 0px;
+  children: [ "hbox" ];
+}
+
+hbox {
+  orientation: horizontal;
+  spacing: 0px;
+  children: [ "preview", "mainbox" ];
+}
+
+preview {
+  expand: false;
+  width: 450px;
+  background-color: var(bg);
+  background-image: url("/home/dmytro/.config/bspwm/rices/Brenda/rice-wallpaper.webp", height);
 }
 
 mainbox {
+  width: 262px;
+  padding: 20px 25px;
   children: [ "textbox-menu-header", "inputbar", "listview" ];
 }
 
