@@ -178,6 +178,13 @@ def get_current_theme():
     return "Unknown"
 
 
+def forget_live_configs():
+    _picom["values"] = None
+    _dunst["values"] = None
+    _kitty["values"] = None
+    _autostart["entries"] = None
+
+
 def bspwm_config_path(theme=None):
     if theme is None:
         theme = get_current_theme()

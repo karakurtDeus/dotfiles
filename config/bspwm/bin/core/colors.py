@@ -13,9 +13,9 @@ _DEFAULTS = {
     "control_panel_button": "#1B191C",
     "control_panel_button_hovered": "#4B3E50",
     "control_panel_button_active": "#4B3E50",
-    "control_panel_frame": "#1B191C",
-    "control_panel_frame_hovered": "#1B191C",
-    "control_panel_frame_active": "#1B191C",
+    "control_panel_frame": "#2C2633",
+    "control_panel_frame_hovered": "#3A3344",
+    "control_panel_frame_active": "#4A3D50",
     "control_panel_tab": "#1B191C",
     "control_panel_tab_hovered": "#4A3D50",
     "control_panel_tab_selected": "#4A3D50",
@@ -189,6 +189,24 @@ def paint_panel_colors(values):
         vec.y = color.y
         vec.z = color.z
         vec.w = color.w
+
+
+_seen_theme = {"name": None}
+
+
+def reload_panel_if_theme_changed():
+    from control_panel import get_current_theme
+
+    theme = get_current_theme()
+    if theme == _seen_theme["name"]:
+        return False
+    _seen_theme["name"] = theme
+    values = read_theme_colors()
+    _theme["values"] = values
+    _rofi["values"] = None
+    _btop["values"] = None
+    paint_panel_colors(values)
+    return True
 
 
 def apply_theme_colors():

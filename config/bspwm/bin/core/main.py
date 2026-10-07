@@ -2,6 +2,7 @@ import time
 from pathlib import Path
 
 from imgui_bundle import imgui, hello_imgui
+from imgui_bundle.immapp import icons_fontawesome_4 as icons
 from control_panel import *
 from colors import *
 
@@ -12,7 +13,6 @@ KERNEL = kernel_version()
 PACKAGES = package_count()
 CPU = cpu_name()
 GPU = gpu_names()
-THEME = get_current_theme()
 # --------------------------
 
 # --------------------------
@@ -51,24 +51,25 @@ def control_panel():
     imgui.new_line()
 
     rows = [
-        ("Theme:", THEME),
+        ("Theme:", get_current_theme()),
         ("Kernel:", KERNEL),
         ("Packages:", PACKAGES),
         ("CPU:", CPU),
         ("GPU:", GPU),
     ]
 
+    begin_fields("##fields-system")
     label_width = max(imgui.calc_text_size(label).x for label, _ in rows)
     gap = imgui.calc_text_size("    ").x
     origin_x = imgui.get_cursor_pos_x()
 
     for label, value in rows:
-        imgui.text_colored(GUI_ACCENT, label)
+        imgui.text_colored(GUI_TEXT, label)
         imgui.same_line()
         imgui.set_cursor_pos_x(origin_x + label_width + gap)
         imgui.text_colored(GUI_TEXT, str(value))
+    end_fields()
 
-    imgui.new_line()
     imgui.new_line()
 
     imgui.push_font(None, imgui.get_style().font_size_base * 1.2)
@@ -88,12 +89,13 @@ def control_panel():
     slider_active = False
 
     device_labels = ["Brightness:", "Volume:", "Mute audio:", "Mute microphone:"]
+    begin_fields("##fields-controls")
     label_width = max(imgui.calc_text_size(label).x for label in device_labels)
     gap = imgui.calc_text_size("    ").x
     origin_x = imgui.get_cursor_pos_x()
 
     def device_row(label):
-        imgui.text_colored(GUI_ACCENT, label)
+        imgui.text_colored(GUI_TEXT, label)
         imgui.same_line()
         imgui.set_cursor_pos_x(origin_x + label_width + gap)
 
@@ -137,8 +139,8 @@ def control_panel():
             devices["brightness"] = fresh_brightness
         devices.update(read_audio())
         control_panel.devices_at = now
+    end_fields()
 
-    imgui.new_line()
     imgui.new_line()
 
     imgui.push_font(None, imgui.get_style().font_size_base * 1.2)
@@ -146,6 +148,7 @@ def control_panel():
     imgui.pop_font()
     imgui.new_line()
 
+    begin_fields("##fields-shortcuts")
     shortcuts = [
         ("Process manager", ["btop"], False),
         ("Network", ["nmtui"], False),
@@ -155,6 +158,7 @@ def control_panel():
     for label, command, hold in shortcuts:
         if shortcut_link(label):
             open_kitty(command, hold)
+    end_fields()
 
 
 
@@ -179,6 +183,7 @@ def setup_style():
     style = imgui.get_style()
     style.tab_bar_border_size = 0
     style.frame_border_size = 0
+    style.frame_rounding = 6
     style.popup_border_size = 1
     for color in SURFACES:
         style.set_color_(color, BACKGROUND)
@@ -228,17 +233,18 @@ def cheatsheet_panel():
         ("Wallpaper selector:", "super + ctrl + w"),
         ("Script manager:", "super + ctrl + space"),
     ]
+    begin_fields("##fields-cheat-rofi")
     label_width = max(imgui.calc_text_size(label).x for label, _ in rows)
     gap = imgui.calc_text_size("    ").x
     origin_x = imgui.get_cursor_pos_x()
 
     for label, value in rows:
-        imgui.text_colored(GUI_ACCENT, label)
+        imgui.text_colored(GUI_TEXT, label)
         imgui.same_line()
         imgui.set_cursor_pos_x(origin_x + label_width + gap)
         imgui.text(str(value))
+    end_fields()
 
-    imgui.new_line()
     imgui.new_line()
 
     imgui.push_font(None, imgui.get_style().font_size_base * 1.2)
@@ -254,17 +260,18 @@ def cheatsheet_panel():
         ("Resize split:", "ctrl + shift + r"),
         ("Close split:", "ctrl + shift + w"),
     ]
+    begin_fields("##fields-cheat-kitty")
     label_width = max(imgui.calc_text_size(label).x for label, _ in rows)
     gap = imgui.calc_text_size("    ").x
     origin_x = imgui.get_cursor_pos_x()
 
     for label, value in rows:
-        imgui.text_colored(GUI_ACCENT, label)
+        imgui.text_colored(GUI_TEXT, label)
         imgui.same_line()
         imgui.set_cursor_pos_x(origin_x + label_width + gap)
         imgui.text(str(value))
+    end_fields()
 
-    imgui.new_line()
     imgui.new_line()
 
     imgui.push_font(None, imgui.get_style().font_size_base * 1.2)
@@ -281,17 +288,18 @@ def cheatsheet_panel():
         ("Grow:", "super + alt + h j k l"),
         ("Shrink:", "super + alt + shift + h j k l"),
     ]
+    begin_fields("##fields-cheat-bspwm")
     label_width = max(imgui.calc_text_size(label).x for label, _ in rows)
     gap = imgui.calc_text_size("    ").x
     origin_x = imgui.get_cursor_pos_x()
 
     for label, value in rows:
-        imgui.text_colored(GUI_ACCENT, label)
+        imgui.text_colored(GUI_TEXT, label)
         imgui.same_line()
         imgui.set_cursor_pos_x(origin_x + label_width + gap)
         imgui.text(str(value))
+    end_fields()
 
-    imgui.new_line()
     imgui.new_line()
 
     imgui.push_font(None, imgui.get_style().font_size_base * 1.2)
@@ -306,17 +314,18 @@ def cheatsheet_panel():
         ("File manager:", "super + e"),
         ("Terminal:", "super + Enter"),
     ]
+    begin_fields("##fields-cheat-general")
     label_width = max(imgui.calc_text_size(label).x for label, _ in rows)
     gap = imgui.calc_text_size("    ").x
     origin_x = imgui.get_cursor_pos_x()
 
     for label, value in rows:
-        imgui.text_colored(GUI_ACCENT, label)
+        imgui.text_colored(GUI_TEXT, label)
         imgui.same_line()
         imgui.set_cursor_pos_x(origin_x + label_width + gap)
         imgui.text(str(value))
+    end_fields()
 
-    imgui.new_line()
     imgui.new_line()
 
     imgui.push_font(None, imgui.get_style().font_size_base * 1.2)
@@ -330,15 +339,46 @@ def cheatsheet_panel():
         ("Bluethooth:", "bluetui"),
         ("Audio:", "wpctl status && wpctl set-default <device>"),
     ]
+    begin_fields("##fields-cheat-quick")
     label_width = max(imgui.calc_text_size(label).x for label, _ in rows)
     gap = imgui.calc_text_size("    ").x
     origin_x = imgui.get_cursor_pos_x()
 
     for label, value in rows:
-        imgui.text_colored(GUI_ACCENT, label)
+        imgui.text_colored(GUI_TEXT, label)
         imgui.same_line()
         imgui.set_cursor_pos_x(origin_x + label_width + gap)
         imgui.text(str(value))
+    end_fields()
+
+def group_fill():
+    blend = 0.55
+    return imgui.ImVec4(
+        GUI_BG.x + (GUI_FRAME.x - GUI_BG.x) * blend,
+        GUI_BG.y + (GUI_FRAME.y - GUI_BG.y) * blend,
+        GUI_BG.z + (GUI_FRAME.z - GUI_BG.z) * blend,
+        1.0,
+    )
+
+
+def begin_fields(name):
+    imgui.push_style_color(imgui.Col_.child_bg, group_fill())
+    imgui.push_style_var(imgui.StyleVar_.child_rounding, 12)
+    imgui.push_style_var(imgui.StyleVar_.window_padding, imgui.ImVec2(12, 10))
+    imgui.begin_child(
+        name,
+        imgui.ImVec2(0, 0),
+        imgui.ChildFlags_.auto_resize_y
+        | imgui.ChildFlags_.always_auto_resize
+        | imgui.ChildFlags_.always_use_window_padding,
+    )
+
+
+def end_fields():
+    imgui.end_child()
+    imgui.pop_style_var(2)
+    imgui.pop_style_color()
+
 
 def appearance_panel():
     title = "Appearance"
@@ -358,19 +398,21 @@ def appearance_panel():
 
     _, values = current_bspwm_settings()
     if values:
+        begin_fields("##fields-bspwm")
         labels = [(key, key.replace("_", " ").capitalize() + ":") for key in values]
         label_width = max(imgui.calc_text_size(label).x for _, label in labels)
         gap = imgui.calc_text_size("    ").x
         origin_x = imgui.get_cursor_pos_x()
 
         for key, label in labels:
-            imgui.text_colored(GUI_ACCENT, label)
+            imgui.text_colored(GUI_TEXT, label)
             imgui.same_line()
             imgui.set_cursor_pos_x(origin_x + label_width + gap)
             imgui.set_next_item_width(140)
             changed, new_value = imgui.input_int(f"##{key}", values[key])
             if changed:
                 set_bspwm_setting(key, new_value)
+        end_fields()
 
     imgui.new_line()
     imgui.push_font(None, imgui.get_style().font_size_base * 1.2)
@@ -392,12 +434,13 @@ def appearance_panel():
         "Level:",
     ]
     backends = ["glx", "egl", "xrender"]
+    begin_fields("##fields-picom")
     label_width = max(imgui.calc_text_size(label).x for label in picom_labels)
     gap = imgui.calc_text_size("    ").x
     origin_x = imgui.get_cursor_pos_x()
 
     def edit_picom(label, key, draw, live=False):
-        imgui.text_colored(GUI_ACCENT, label)
+        imgui.text_colored(GUI_TEXT, label)
         imgui.same_line()
         imgui.set_cursor_pos_x(origin_x + label_width + gap)
         imgui.set_next_item_width(180)
@@ -435,7 +478,7 @@ def appearance_panel():
     labels = [label for label, _klass in apps]
     if not hasattr(appearance_panel, "exclude_index"):
         appearance_panel.exclude_index = 0
-    imgui.text_colored(GUI_ACCENT, "Exclude:")
+        imgui.text_colored(GUI_TEXT, "Exclude:")
     imgui.same_line()
     imgui.set_cursor_pos_x(origin_x + label_width + gap)
     imgui.set_next_item_width(220)
@@ -459,6 +502,7 @@ def appearance_panel():
         if imgui.button(f"Remove##{klass}"):
             settings["opacity_exclude"].remove(klass)
             apply_picom_settings()
+    end_fields()
 
     imgui.new_line()
     imgui.push_font(None, imgui.get_style().font_size_base * 1.2)
@@ -478,11 +522,12 @@ def appearance_panel():
         + [label for _section, label in DUNST_TIMEOUTS]
         + [label for label, _, _ in color_rows]
     )
+    begin_fields("##fields-dunst")
     label_width = max(imgui.calc_text_size(label).x for label in dunst_labels)
     gap = imgui.calc_text_size("    ").x
     origin_x = imgui.get_cursor_pos_x()
 
-    imgui.text_colored(GUI_ACCENT, "Font:")
+    imgui.text_colored(GUI_TEXT, "Font:")
     imgui.same_line()
     imgui.set_cursor_pos_x(origin_x + label_width + gap)
     imgui.set_next_item_width(300)
@@ -493,7 +538,7 @@ def appearance_panel():
             dunst["family"] = fonts[index]
             apply_dunst_settings()
 
-    imgui.text_colored(GUI_ACCENT, "Size:")
+    imgui.text_colored(GUI_TEXT, "Size:")
     imgui.same_line()
     imgui.set_cursor_pos_x(origin_x + label_width + gap)
     imgui.set_next_item_width(300)
@@ -505,7 +550,7 @@ def appearance_panel():
         apply_dunst_settings()
 
     def dunst_control(label):
-        imgui.text_colored(GUI_ACCENT, label)
+        imgui.text_colored(GUI_TEXT, label)
         imgui.same_line()
         imgui.set_cursor_pos_x(origin_x + label_width + gap)
         imgui.set_next_item_width(300)
@@ -544,7 +589,7 @@ def appearance_panel():
         if imgui.is_item_deactivated_after_edit():
             apply_dunst_settings()
 
-    imgui.text_colored(GUI_ACCENT, "Border:")
+    imgui.text_colored(GUI_TEXT, "Border:")
     imgui.same_line()
     imgui.set_cursor_pos_x(origin_x + label_width + gap)
     enabled = int(dunst["frame_width"]) > 0
@@ -558,7 +603,7 @@ def appearance_panel():
             dunst["frame_width"] = 0
         apply_dunst_settings()
 
-    imgui.text_colored(GUI_ACCENT, "Border size:")
+    imgui.text_colored(GUI_TEXT, "Border size:")
     imgui.same_line()
     imgui.set_cursor_pos_x(origin_x + label_width + gap)
     imgui.set_next_item_width(300)
@@ -572,7 +617,7 @@ def appearance_panel():
         apply_dunst_settings()
 
     for label, section, key in color_rows:
-        imgui.text_colored(GUI_ACCENT, label)
+        imgui.text_colored(GUI_TEXT, label)
         imgui.same_line()
         imgui.set_cursor_pos_x(origin_x + label_width + gap)
         imgui.set_next_item_width(300)
@@ -585,6 +630,7 @@ def appearance_panel():
             dunst["colors"][(section, key)] = color_to_hex(color)
         if imgui.is_item_deactivated_after_edit():
             apply_dunst_settings()
+    end_fields()
 
     kitty = current_kitty_settings()
     if kitty["order"]:
@@ -594,13 +640,14 @@ def appearance_panel():
         imgui.pop_font()
         imgui.new_line()
 
+        begin_fields("##fields-kitty")
         kitty_labels = [KITTY_LABELS[key] for key in kitty["order"]]
         label_width = max(imgui.calc_text_size(label).x for label in kitty_labels)
         gap = imgui.calc_text_size("    ").x
         origin_x = imgui.get_cursor_pos_x()
 
         def kitty_control(label, width=True):
-            imgui.text_colored(GUI_ACCENT, label)
+            imgui.text_colored(GUI_TEXT, label)
             imgui.same_line()
             imgui.set_cursor_pos_x(origin_x + label_width + gap)
             if width:
@@ -642,6 +689,7 @@ def appearance_panel():
                     kitty["values"][key] = str(size)
                 if imgui.is_item_deactivated_after_edit():
                     apply_kitty_settings()
+        end_fields()
 
     theme = current_theme_colors()
 
@@ -654,11 +702,12 @@ def appearance_panel():
         imgui.text_colored(GUI_ACCENT, title)
         imgui.pop_font()
         imgui.new_line()
+        begin_fields(f"##fields-theme-{title}")
         label_width = max(imgui.calc_text_size(label).x for _key, label in rows)
         gap = imgui.calc_text_size("    ").x
         origin_x = imgui.get_cursor_pos_x()
         for key, label in rows:
-            imgui.text_colored(GUI_ACCENT, label)
+            imgui.text_colored(GUI_TEXT, label)
             imgui.same_line()
             imgui.set_cursor_pos_x(origin_x + label_width + gap)
             imgui.set_next_item_width(300)
@@ -673,6 +722,7 @@ def appearance_panel():
                 apply_theme_colors()
                 if key.startswith("control_panel_"):
                     setup_style()
+        end_fields()
 
     draw_theme_group("Lockscreen", LOCKSCREEN_FIELDS)
     draw_theme_group("Control panel", PANEL_FIELDS)
@@ -683,7 +733,6 @@ def appearance_panel():
         imgui.push_font(None, imgui.get_style().font_size_base * 1.2)
         imgui.text_colored(GUI_ACCENT, "Rofi")
         imgui.pop_font()
-        imgui.text_colored(GUI_TEXT, rofi["theme"])
 
         def draw_rofi_group(title, name):
             colors = rofi["files"].get(name, {})
@@ -693,11 +742,12 @@ def appearance_panel():
             imgui.new_line()
             imgui.text_colored(GUI_ACCENT, title)
             imgui.new_line()
+            begin_fields(f"##fields-rofi-{name}")
             label_width = max(imgui.calc_text_size(label).x for _key, label in rows)
             gap = imgui.calc_text_size("    ").x
             origin_x = imgui.get_cursor_pos_x()
             for key, label in rows:
-                imgui.text_colored(GUI_ACCENT, label)
+                imgui.text_colored(GUI_TEXT, label)
                 imgui.same_line()
                 imgui.set_cursor_pos_x(origin_x + label_width + gap)
                 imgui.set_next_item_width(300)
@@ -710,6 +760,7 @@ def appearance_panel():
                     colors[key] = color_to_hex(color)
                 if imgui.is_item_deactivated_after_edit():
                     apply_rofi_colors()
+            end_fields()
 
         draw_rofi_group("Powermenu", "powermenu")
         draw_rofi_group("Select", "select")
@@ -729,11 +780,12 @@ def appearance_panel():
             imgui.new_line()
             imgui.text_colored(GUI_ACCENT, title)
             imgui.new_line()
+            begin_fields(f"##fields-btop-{title}")
             label_width = max(imgui.calc_text_size(label).x for _key, label in rows)
             gap = imgui.calc_text_size("    ").x
             origin_x = imgui.get_cursor_pos_x()
             for key, label in rows:
-                imgui.text_colored(GUI_ACCENT, label)
+                imgui.text_colored(GUI_TEXT, label)
                 imgui.same_line()
                 imgui.set_cursor_pos_x(origin_x + label_width + gap)
                 imgui.set_next_item_width(300)
@@ -746,6 +798,7 @@ def appearance_panel():
                     btop[key] = color_to_hex(color)
                 if imgui.is_item_deactivated_after_edit():
                     apply_btop_colors()
+            end_fields()
 
         for title, fields in BTOP_GROUPS:
             draw_btop_group(title, fields)
@@ -754,21 +807,41 @@ def launcher_config_path():
     return Path.home() / ".config/bspwm/rices" / get_current_theme() / "config" / "rofi"
 
 
-def read_launcher():
+def read_rofi_option(key, default, allowed):
     path = launcher_config_path()
     if path.is_file():
         for line in path.read_text().splitlines():
-            if line.startswith("launcher="):
-                name = line.split("=", 1)[1].strip()
-                if name in ("drun", "drun2"):
-                    return name
-    return "drun2"
+            if line.startswith(f"{key}="):
+                value = line.split("=", 1)[1].strip()
+                if value in allowed:
+                    return value
+    return default
+
+
+def write_rofi_option(key, value):
+    path = launcher_config_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    current = {}
+    if path.is_file():
+        for line in path.read_text().splitlines():
+            if "=" not in line:
+                continue
+            name, stored = line.split("=", 1)
+            current[name.strip()] = stored.strip()
+    current[key] = value
+    lines = []
+    for name in ("launcher", "icons"):
+        if name in current:
+            lines.append(f"{name}={current[name]}")
+    path.write_text("\n".join(lines) + "\n")
+
+
+def read_launcher():
+    return read_rofi_option("launcher", "drun2", ("drun", "drun2"))
 
 
 def write_launcher(name):
-    path = launcher_config_path()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(f"launcher={name}\n")
+    write_rofi_option("launcher", name)
 
 
 def launcher_panel():
@@ -781,13 +854,19 @@ def launcher_panel():
     imgui.pop_font()
 
     imgui.new_line()
-    imgui.text_colored(GUI_TEXT, get_current_theme())
-    imgui.new_line()
-
+    begin_fields("##fields-launcher")
     current = read_launcher()
     for name, label in (("drun", "Drun"), ("drun2", "Drun 2")):
         if imgui.radio_button(label, current == name):
             write_launcher(name)
+
+    imgui.text_colored(GUI_TEXT, "Icons:")
+    icons = read_rofi_option("icons", "no", ("yes", "no"))
+    for value, label in (("yes", "Yes"), ("no", "No")):
+        imgui.same_line()
+        if imgui.radio_button(f"{label}##icons", icons == value):
+            write_rofi_option("icons", value)
+    end_fields()
 
 
 def autostart_panel():
@@ -798,7 +877,6 @@ def autostart_panel():
     imgui.push_font(None, imgui.get_style().font_size_base * 1.4)
     imgui.text_colored(GUI_ACCENT, title)
     imgui.pop_font()
-    imgui.text_colored(GUI_TEXT, get_current_theme())
     imgui.new_line()
 
     entries = current_autostart()
@@ -813,7 +891,8 @@ def autostart_panel():
     desks = autostart_panel.desks
 
     labels = [app["name"] if app["name"] == app["class"] else f"{app['name']} ({app['class']})" for app in apps]
-    imgui.text_colored(GUI_ACCENT, "App:")
+    begin_fields("##fields-autostart-add")
+    imgui.text_colored(GUI_TEXT, "App:")
     imgui.same_line()
     imgui.set_next_item_width(280)
     if labels:
@@ -838,7 +917,7 @@ def autostart_panel():
                 })
                 save_autostart()
 
-    imgui.text_colored(GUI_ACCENT, "Link:")
+    imgui.text_colored(GUI_TEXT, "Link:")
     imgui.same_line()
     imgui.set_next_item_width(280)
     _changed, autostart_panel.url = imgui.input_text("##autostart-url", autostart_panel.url)
@@ -869,7 +948,7 @@ def autostart_panel():
             f"{name}  {window['desktop']}  {'floating' if window['floating'] else 'tiled'}"
         )
     if window_labels:
-        imgui.text_colored(GUI_ACCENT, "Window:")
+        imgui.text_colored(GUI_TEXT, "Window:")
         imgui.same_line()
         imgui.set_next_item_width(280)
         autostart_panel.window_index = min(autostart_panel.window_index, len(window_labels) - 1)
@@ -897,11 +976,13 @@ def autostart_panel():
             if not replaced:
                 entries.append(entry)
             save_autostart()
+    end_fields()
 
     imgui.new_line()
     for index, entry in enumerate(list(entries)):
+        begin_fields(f"##fields-autostart-{index}")
         title = entry["url"] or entry.get("title") or entry["class"] or entry["exec"]
-        imgui.text_colored(GUI_ACCENT, title)
+        imgui.text_colored(GUI_TEXT, title)
         if entry["exec"] and not entry["url"]:
             imgui.same_line()
             imgui.text_colored(GUI_TEXT, entry["exec"])
@@ -909,8 +990,9 @@ def autostart_panel():
         if imgui.button(f"Remove##autostart-{index}"):
             entries.pop(index)
             save_autostart()
+            end_fields()
             continue
-        imgui.text_colored(GUI_ACCENT, "Desktop:")
+        imgui.text_colored(GUI_TEXT, "Desktop:")
         imgui.same_line()
         imgui.set_next_item_width(120)
         changed, desk = imgui.slider_int(f"##autostart-desk-{index}", int(entry["desktop"]), 1, desks)
@@ -925,7 +1007,7 @@ def autostart_panel():
             save_autostart()
         if entry["floating"]:
             for key, label in (("x", "X"), ("y", "Y"), ("w", "W"), ("h", "H")):
-                imgui.text_colored(GUI_ACCENT, f"{label}:")
+                imgui.text_colored(GUI_TEXT, f"{label}:")
                 imgui.same_line()
                 imgui.set_next_item_width(90)
                 changed, value = imgui.input_int(f"##autostart-{key}-{index}", int(entry[key]))
@@ -937,6 +1019,77 @@ def autostart_panel():
             if entry.get("sw") and entry.get("sh"):
                 imgui.text_colored(GUI_TEXT, f"{int(entry['sw'])}x{int(entry['sh'])}")
             imgui.new_line()
+        end_fields()
+
+
+PAGES = (
+    ("Control Panel", icons.ICON_FA_SLIDERS_H, control_panel),
+    ("Appearance", icons.ICON_FA_PAINT_BRUSH, appearance_panel),
+    ("Launcher", icons.ICON_FA_ROCKET, launcher_panel),
+    ("Autostart", icons.ICON_FA_BOLT, autostart_panel),
+    ("Cheatsheet", icons.ICON_FA_BOOK, cheatsheet_panel),
+)
+SIDEBAR_WIDTH = 196
+
+
+def nav_item(label, icon, selected):
+    width = imgui.get_content_region_avail().x
+    height = 40
+    pos = imgui.get_cursor_screen_pos()
+    clicked = imgui.invisible_button(f"##nav-{label}", imgui.ImVec2(width, height))
+    hovered = imgui.is_item_hovered()
+    if hovered:
+        imgui.set_mouse_cursor(imgui.MouseCursor_.hand)
+
+    if selected:
+        fill = GUI_ACCENT
+        text = GUI_BG
+    elif hovered:
+        fill = GUI_BUTTON_HOVERED
+        text = GUI_TEXT
+    else:
+        fill = None
+        text = GUI_TEXT
+
+    draw = imgui.get_window_draw_list()
+    rect_min = imgui.ImVec2(pos.x + 8, pos.y + 3)
+    rect_max = imgui.ImVec2(pos.x + width - 8, pos.y + height - 3)
+    if fill is not None:
+        draw.add_rect_filled(rect_min, rect_max, imgui.color_convert_float4_to_u32(fill), 12)
+
+    caption = f"{icon}   {label}"
+    text_size = imgui.calc_text_size(caption)
+    draw.add_text(
+        imgui.ImVec2(rect_min.x + 12, pos.y + (height - text_size.y) * 0.5),
+        imgui.color_convert_float4_to_u32(text),
+        caption,
+    )
+    return clicked
+
+
+def show_sidebar():
+    imgui.push_style_var(imgui.StyleVar_.item_spacing, imgui.ImVec2(0, 2))
+    imgui.push_style_var(imgui.StyleVar_.window_padding, imgui.ImVec2(0, 12))
+    imgui.begin_child(
+        "##nav",
+        imgui.ImVec2(SIDEBAR_WIDTH, 0),
+        imgui.ChildFlags_.always_use_window_padding,
+    )
+    for index, (label, icon, _draw) in enumerate(PAGES):
+        if nav_item(label, icon, show_sidebar.page == index):
+            show_sidebar.page = index
+    imgui.end_child()
+    imgui.pop_style_var(2)
+
+    imgui.same_line(0, 0)
+    imgui.push_style_var(imgui.StyleVar_.window_padding, imgui.ImVec2(16, 12))
+    imgui.begin_child("##page", imgui.ImVec2(0, 0), imgui.ChildFlags_.always_use_window_padding)
+    PAGES[show_sidebar.page][2]()
+    imgui.end_child()
+    imgui.pop_style_var()
+
+
+show_sidebar.page = 0
 
 
 def main():
@@ -945,59 +1098,26 @@ def main():
 
     params.app_window_params.window_title = "Arch Control Panel"
 
-    params.app_window_params.window_geometry.size = (900, 600)
+    params.app_window_params.window_geometry.size = (1080, 680)
 
-    # Enable docking
     params.imgui_window_params.default_imgui_window_type = (
-        hello_imgui.DefaultImGuiWindowType.provide_full_screen_dock_space
+        hello_imgui.DefaultImGuiWindowType.provide_full_screen_window
     )
 
     params.ini_disable = True
     params.ini_clear_previous_settings = True
-    params.docking_params.layout_condition = (
-        hello_imgui.DockingLayoutCondition.application_start
-    )
     params.imgui_window_params.background_color = BACKGROUND
     params.callbacks.setup_imgui_style = setup_style
 
     def show_gui():
-        # The last docked window takes focus on the first frame.
-        if show_gui.frame == 1:
-            params.docking_params.focus_dockable_window("Control Panel")
-        show_gui.frame += 1
+        if reload_panel_if_theme_changed():
+            forget_live_configs()
+            setup_style()
+            params.imgui_window_params.background_color = GUI_BG
+        show_sidebar()
 
-    show_gui.frame = 0
     params.callbacks.show_gui = show_gui
 
-    # Window list
-    windows = [
-        ("Control Panel", control_panel),
-        ("Appearance", appearance_panel),
-        ("Launcher", launcher_panel),
-        ("Autostart", autostart_panel),
-        ("Cheatsheet", cheatsheet_panel),
-    ]
-
-    dockable_windows = []
-
-    for name, function in windows:
-
-        window = hello_imgui.DockableWindow()
-
-        window.label = name
-
-        window.dock_space_name = "MainDockSpace"
-
-        window.gui_function = function
-
-        window.can_be_closed = False
-
-        dockable_windows.append(window)
-
-    # IMPORTANT: pass the whole list at once
-    params.docking_params.dockable_windows = dockable_windows
-
-    # Run the application
     hello_imgui.run(params)
 
 
