@@ -868,6 +868,154 @@ def launcher_panel():
             write_rofi_option("icons", value)
     end_fields()
 
+def biblia_panel():
+    title = "Linux biblia"
+    avail = imgui.get_content_region_avail().x
+    text_width = imgui.calc_text_size(title).x
+    imgui.set_cursor_pos_x(imgui.get_cursor_pos_x() + (avail - text_width) * 0.5)
+    imgui.push_font(None, imgui.get_style().font_size_base * 1.4)
+    imgui.text_colored(GUI_ACCENT, title)
+    imgui.pop_font()
+
+
+    imgui.push_font(None, imgui.get_style().font_size_base * 1.2)
+    imgui.text_colored(GUI_ACCENT, "Directories Found on Linux Systems")
+    imgui.pop_font()
+
+    imgui.new_line()
+
+    rows = [
+        ("/etc", "the /etc directory contains all the system-wide configuration files."),
+        ("/home", 'in normal configurations, each user is given a directory in /home. ordinary users can write files only in their home directories'),
+        ("/lib", "contains shared library files used by the core system programs"),
+        ("/lost+found", "each formatted partition or device using a linux file system, such as ext3, will have this directory. it is used in the case of a partial recovery from a file system corruption event."),
+        ("/media", "on older linux systems, the /mnt directory contains mount points for removable devices that have been mounted manually"),
+        ("/opt", "the /opt directory is used to install “optional” software."),
+        ("/proc", "the /proc directory is special. it’s not a real file system in the sense of files stored on your hard drive."),
+        ("/root", "this is the home directory for the root account."),
+        ("/sbin", "this directory contains “system” binaries."),
+        ("/tmp", "the /tmp directory is intended for the storage of temporary, transient files created by various programs."),
+        ("/usr", "the /usr directory tree is likely the largest one on a linux system."),
+        ("/usr/bin", "/usr/bin contains the executable programs installed by your linux distribution."),
+        ("/usr/lib", "the shared libraries for the programs in /usr/bin."),
+        ("/usr/local", "the /usr/local tree is where programs that are not included with your distribution but are intended for system-wide use are installed."),
+        ("/usr/sbin", "contains more system administration programs."),
+        ("/usr/share", "/usr/share contains all the shared data used by programs in /usr/bin."),
+        ("usr/share/doc", "most packages installed on the system will include some kind of documentation."),
+        ("/var", "with the exception of /tmp and /home, the directories we have looked at so far remain relatively static; that is, their contents don’t change."),
+        ("/var/log", "var/log contains log files, records of various system activity."),
+    ]
+    begin_fields("##fields-biblia")
+    label_width = max(imgui.calc_text_size(label).x for label, _ in rows)
+    gap = imgui.calc_text_size("    ").x
+    value_x = imgui.get_cursor_pos_x() + label_width + gap
+
+    def wrapped(text, x, width):
+        line = ""
+        first = True
+        for word in text.split():
+            trial = word if not line else f"{line} {word}"
+            if imgui.calc_text_size(trial).x <= width:
+                line = trial
+                continue
+            if line:
+                if not first:
+                    imgui.set_cursor_pos_x(x)
+                imgui.text(line)
+                first = False
+            line = word
+        if not line:
+            return
+        if not first:
+            imgui.set_cursor_pos_x(x)
+        imgui.text(line)
+
+    for label, value in rows:
+        imgui.text_colored(GUI_TEXT, label)
+        imgui.same_line()
+        imgui.set_cursor_pos_x(value_x)
+        wrapped(value, value_x, max(40.0, imgui.get_content_region_avail().x))
+    end_fields()
+
+    imgui.new_line()
+
+    imgui.push_font(None, imgui.get_style().font_size_base * 1.2)
+    imgui.text_colored(GUI_ACCENT, "Permissions")
+    imgui.pop_font()
+
+    imgui.new_line()
+    rows = [
+        ("-rwxrw-r--", "1 type, 2 owner, 3 group, 4 others."),
+        ("-", "Regular file."),
+        ("d", "Directory."),
+        ("l", "Symlink. Rights are on the target."),
+        ("c", "Character device. Byte stream."),
+        ("b", "Block device. Data in blocks."),
+        ("r file", "Read the file."),
+        ("r dir", "List names. Needs x."),
+        ("w file", "Write or truncate. Not rename or delete."),
+        ("w dir", "Create, delete, rename inside. Needs x."),
+        ("x file", "Run. Scripts also need r."),
+        ("x dir", "Enter with cd."),
+        ("chmod", "Changes the mode. One digit each: owner, group, others."),
+        ("umask", "Bits taken off new files. 022 gives files 644, dirs 755."),
+    ]
+    begin_fields("##fields-permission")
+    label_width = max(imgui.calc_text_size(label).x for label, _ in rows)
+    gap = imgui.calc_text_size("    ").x
+    value_x = imgui.get_cursor_pos_x() + label_width + gap
+
+    for label, value in rows:
+        imgui.text_colored(GUI_TEXT, label)
+        imgui.same_line()
+        imgui.set_cursor_pos_x(value_x)
+        wrapped(value, value_x, max(40.0, imgui.get_content_region_avail().x))
+    end_fields()
+
+    imgui.new_line()
+
+    imgui.push_font(None, imgui.get_style().font_size_base * 1.2)
+    imgui.text_colored(GUI_ACCENT, "chmod")
+    imgui.pop_font()
+
+    imgui.new_line()
+
+    modes = (
+        ("0", "000", "---"),
+        ("1", "001", "--x"),
+        ("2", "010", "-w-"),
+        ("3", "011", "-wx"),
+        ("4", "100", "r--"),
+        ("5", "101", "r-x"),
+        ("6", "110", "rw-"),
+        ("7", "111", "rwx"),
+    )
+    begin_fields("##fields-chmod")
+    gap = imgui.calc_text_size("    ").x
+    origin = imgui.get_cursor_pos_x()
+    bin_x = origin + imgui.calc_text_size("octal").x + gap
+    mode_x = bin_x + imgui.calc_text_size("binary").x + gap
+    imgui.text_colored(GUI_TEXT, "chmod 754 file")
+    imgui.same_line()
+    imgui.set_cursor_pos_x(mode_x)
+    imgui.text("owner, group, others")
+    for title, x in (("octal", origin), ("binary", bin_x), ("mode", mode_x)):
+        if x != origin:
+            imgui.same_line()
+            imgui.set_cursor_pos_x(x)
+        imgui.text(title)
+    for octal, binary, mode in modes:
+        imgui.text_colored(GUI_TEXT, octal)
+        imgui.same_line()
+        imgui.set_cursor_pos_x(bin_x)
+        imgui.text(binary)
+        imgui.same_line()
+        imgui.set_cursor_pos_x(mode_x)
+        imgui.text(mode)
+    end_fields()
+
+    imgui.new_line()
+
 
 def autostart_panel():
     title = "Autostart"
@@ -1028,6 +1176,7 @@ PAGES = (
     ("Launcher", icons.ICON_FA_ROCKET, launcher_panel),
     ("Autostart", icons.ICON_FA_BOLT, autostart_panel),
     ("Cheatsheet", icons.ICON_FA_BOOK, cheatsheet_panel),
+    ("Biblia", icons.ICON_FA_BIBLE, biblia_panel),
 )
 SIDEBAR_WIDTH = 196
 
@@ -1107,6 +1256,7 @@ def main():
     params.ini_disable = True
     params.ini_clear_previous_settings = True
     params.imgui_window_params.background_color = BACKGROUND
+    params.callbacks.default_icon_font = hello_imgui.DefaultIconFont.font_awesome6
     params.callbacks.setup_imgui_style = setup_style
 
     def show_gui():
