@@ -58,7 +58,17 @@ pgrep -x flameshot >/dev/null || flameshot &
 
 # bar
 killall -q polybar
-polybar down-panel &
+while pgrep -x polybar >/dev/null; do sleep 0.1; done
+
+while IFS= read -r line; do
+  case $line in
+    \[bar/*\])
+      name=${line#\[bar/}
+      name=${name%]*}
+      polybar "$name" &
+      ;;
+  esac
+done < "$HOME/.config/polybar/config.ini"
 
 # background — rice-wallpaper.* is only the theme-menu preview
 pic_dir="$HOME/.config/bspwm/rices/$RICE/wallpapers"

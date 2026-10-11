@@ -92,6 +92,16 @@ thumb_of() {
   printf '%s\n' "$dest"
 }
 
+selected=0
+i=0
+for dir in "${dirs[@]}"; do
+  if [ "$(basename "$dir")" = "$RICE" ]; then
+    selected=$i
+    break
+  fi
+  i=$((i + 1))
+done
+
 "$HOME/.config/bspwm/bin/hideCursor.sh" &
 cursor_hide=$!
 trap 'kill "$cursor_hide" 2>/dev/null; wait "$cursor_hide" 2>/dev/null' EXIT
@@ -106,7 +116,7 @@ chosen=$(
     else
       printf '%s\n' "$name"
     fi
-  done | rofi -dmenu -i -window-title theme \
+  done | rofi -dmenu -i -selected-row "$selected" -window-title theme \
     -config "$HOME/.config/bspwm/rices/$RICE/rofi/select.rasi" \
     -theme-str "window { fullscreen: true; width: ${mon_w}px; height: ${mon_h}px; border-radius: 0px; }" \
     -theme-str "* { font: \"Liberation Sans ${font_px}\"; }" \

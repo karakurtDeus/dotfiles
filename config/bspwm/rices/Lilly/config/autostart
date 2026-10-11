@@ -1,0 +1,6 @@
+# class	exec	url	desktop	floating	x	y	w	h	sw	sh	title
+TelegramDesktop	Telegram	-	1	0	0	10	1003	1046	1920	1080	Telegram (2725)
+signal	signal-desktop	-	1	0	1003	10	927	543	1920	1080	Signal
+firefox	firefox	https://web.whatsapp.com/	1	0	1003	553	927	503	1920	1080	WhatsApp — Mozilla Firefox
+discord	discord	-	2	0	1003	10	927	1046	1920	1080	@KIT - Discord
+firefox	firefox	https://music.youtube.com/	2	0	0	10	1003	1046	1920	1080	YouTube Music — Mozilla Firefox

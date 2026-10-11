@@ -80,6 +80,15 @@ thumb_of() {
   printf '%s\n' "$dest"
 }
 
+selected=0
+i=0
+for file in "${walls[@]}"; do
+  case "$(basename "$file")" in
+    "$prefix"*) selected=$i; break ;;
+  esac
+  i=$((i + 1))
+done
+
 "$HOME/.config/bspwm/bin/hideCursor.sh" &
 cursor_hide=$!
 trap 'kill "$cursor_hide" 2>/dev/null; wait "$cursor_hide" 2>/dev/null' EXIT
@@ -91,7 +100,7 @@ chosen=$(
     label="${label#"$prefix"}"
     thumb=$(thumb_of "$file") || thumb="$file"
     printf '%s\0icon\x1f%s\x1fdisplay\x1f%s\n' "$name" "$thumb" "$label"
-  done | rofi -dmenu -i -window-title wallpaper \
+  done | rofi -dmenu -i -selected-row "$selected" -window-title wallpaper \
     -config "$HOME/.config/bspwm/rices/$RICE/rofi/select.rasi" \
     -theme-str "window { fullscreen: true; width: ${mon_w}px; height: ${mon_h}px; border-radius: 0px; }" \
     -theme-str "* { font: \"Liberation Sans ${font_px}\"; }" \
