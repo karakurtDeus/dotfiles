@@ -1,8 +1,8 @@
 #!/bin/bash
 
 logo() {
-  clear
-
+  echo ""
+  #clear
   local -a describe=$1
 
   if [[ -n "$1" ]]; then
@@ -10,9 +10,11 @@ logo() {
   else
     echo -e "\n"
   fi
+
+  return 0
 }
 
-createStdDir() {
+create_std_dir() {
   local listDirs=(
     "Documents"
     "Downloads"
@@ -26,6 +28,7 @@ createStdDir() {
     mkdir -p $HOME/$dir &>>log
   done
 
+  return 0
 }
 
 installPkgs() {
@@ -33,38 +36,42 @@ installPkgs() {
 
   for pkg in "${listPkgs[@]}"; do
     if sudo pacman -Q $pkg &>>log; then
-      echo "[OK]: $pkg was already installed"
+      echo "[OK] $pkg was already installed"
     else
       if sudo pacman -S $pkg --noconfirm &>>log; then
-        echo "[OK]: $pkg installed"
+        echo "[OK] $pkg installed"
       else
-        echo "[FAIL]: $pkg installed"
+        echo "[FAIL] $pkg installed"
         exit 1
       fi
     fi
 
   done
+
+  return 0
 }
 
-installYayPkgs() {
+install_yay_pkgs() {
   local -a listPkgs=("${@}")
 
   for pkg in "${listPkgs[@]}"; do
     if yay -Q $pkg &>>log; then
-      echo "[OK]: $pkg was already installed"
+      echo "[OK] $pkg was already installed"
     else
       if yay -S $pkg --noconfirm &>>log; then
-        echo "[OK]: $pkg installed"
+        echo "[OK] $pkg installed"
       else
-        echo "[FAIL]: $pkg installed"
+        echo "[FAIL] $pkg installed"
         exit 1
       fi
     fi
 
   done
+
+  return 0
 }
 
-systemPkgs() {
+system_pkgs() {
   logo "Install system package"
 
   local listPkgs=(
@@ -173,48 +180,58 @@ systemPkgs() {
     "xorg-xset"
     "feh" # background
     # just need xd
-    "cmatrix"
-    "cava"
-    "playerctl"
+    #"cmatrix"
+    #"cava"
+    #"playerctl"
   )
   installPkgs "${listPkgs[@]}"
 
-  echo -e "\nPress any key to continue..."
-  read
+  return 0
 }
 
-enableMultilib() {
+enable_multilib() {
   logo "Enable multilib"
 
   if grep -q '^\[multilib\]' /etc/pacman.conf; then
-    echo "[OK]: multilib"
+    echo "[OK] multilib"
   else
     if sudo sed -i '/^#\[multilib\]/,/^#Include = \/etc\/pacman\.d\/mirrorlist/s/^#//' /etc/pacman.conf; then
-      echo "[OK]: add multilib"
+      echo "[OK] add multilib"
     else
-      echo "[FAIL]: add multilib"
+      echo "[FAIL] add multilib"
     fi
   fi
 
   if sudo pacman -Syu --noconfirm &>>log; then
-    echo "[OK]: update pkg"
+    echo "[OK] update pkg"
   else
-    echo "[FAIL]: update pkg"
+    echo "[FAIL] update pkg"
     exit 1
   fi
 
-  echo -e "\nPress any key to continue..."
-  read
+  return 0
 }
 
-personalPkgs() {
-  logo "Install personal package"
+input_value() {
+  local question=$1
+  read -rp "$question" value
 
-  read -r -p "Install karakurt personal package (y/n)? " answer
+  case $value in
+  "y" | "yes" | "YES" | "Yes")
+    echo "1"
+    ;;
+  *)
+    echo "0"
+    ;;
+  esac
+  return
+}
 
-  case $answer in
-  "y" | "yes" | "YES" | "Y")
+personal_pkgs() {
+  local optional=$1
 
+  if [[ $optional == 1 ]]; then
+    logo "Install personal package"
     local listPkgs=(
       "keepassxc"
       "telegram-desktop"
@@ -224,12 +241,11 @@ personalPkgs() {
       "espeak-ng"
       "speech-dispatcher"
       "signal-desktop"
-      "kdenlive"
-      "obs-studio"
+      #"kdenlive"
       "wireguard-tools"
       "mpv"
       "steam"
-      "obs-studio"
+      #"obs-studio"
       "krita"
     )
     installPkgs "${listPkgs[@]}"
@@ -238,18 +254,13 @@ personalPkgs() {
       "spotify"
       "winbox"
     )
-    installYayPkgs "${listPkgs[@]}"
-    ;;
-  *)
-    ;;
-  esac
+    install_yay_pkgs "${listPkgs[@]}"
+  fi
 
-  echo -e "\nPress any key to continue..."
-  read
-
+  return 0
 }
 
-startServices() {
+start_services() {
   logo "Enable and start services"
 
   local -a services=(
@@ -259,18 +270,17 @@ startServices() {
 
   for src in "${services[@]}"; do
     if sudo systemctl enable --now $src &>>log; then
-      echo "[OK]: Enable and start service $src"
+      echo "[OK] Enable and start service $src"
     else
-      echo "[FAIL]: Enable and start service $src"
+      echo "[FAIL] Enable and start service $src"
     fi
 
   done
 
-  echo -e "\nPress any key to continue..."
-  read
+  return 0
 }
 
-installFonts() {
+install_fonts() {
   logo "Fonts install"
 
   local coreDir="$HOME/.local/share/fonts"
@@ -284,22 +294,22 @@ installFonts() {
   )
 
   if mkdir -p $coreDir &>>log; then
-    echo "[OK]: Font core dir create"
+    echo "[OK] Font core dir create"
   else
-    echo "[FAIL]: Font core dir create"
+    echo "[FAIL] Font core dir create"
     exit 1
   fi
 
   # font 0
   if fc-list | grep -qi "MesloLGS NF"; then
-    echo "[OK]: MesloLGS NF already installed"
+    echo "[OK] MesloLGS NF already installed"
   else
     mkdir -p "$coreDir/${fontMesloLGS[0]}"
     for font in "${fontMesloLGS[@]:1}"; do
       if wget -P "$coreDir/${fontMesloLGS[0]}" "$font" &>>log; then
-        echo "[OK]: $font"
+        echo "[OK] $font"
       else
-        echo "[FAIL]: $font"
+        echo "[FAIL] $font"
         exit 1
       fi
     done
@@ -312,36 +322,33 @@ installFonts() {
   )
 
   if fc-list | grep -qi "Press Start 2P"; then
-    echo "[OK]: Press Start 2P already installed"
+    echo "[OK] Press Start 2P already installed"
   else
     mkdir -p "$coreDir/${fontPressStart2P[0]}"
     if wget -P "$coreDir/${fontPressStart2P[0]}" "${fontPressStart2P[1]}" &>>log; then
-      echo "[OK]: Press Start 2P"
+      echo "[OK] Press Start 2P"
     else
-      echo "[FAIL]: Press Start 2P"
+      echo "[FAIL] Press Start 2P"
       exit 1
     fi
   fi
 
   # finish
   if fc-cache -fv &>>log; then
-    echo "[OK]: Font cache updated"
+    echo "[OK] Font cache updated"
   else
-    echo "[FAIL]: Font cache update"
+    echo "[FAIL] Font cache update"
     exit 1
   fi
 
-  echo -e "\nPress any key to continue..."
-  read
+  return 0
 }
 
-nvidiaPkgs() {
-  logo "Install nvidia package"
+nvidia_pkgs() {
+  local optional=$1
 
-  read -r -p "Do you have an Nvidia gpu (y/n)? " answer
-
-  case $answer in
-  "y" | "yes" | "YES" | "Y")
+  if [[ $optional == 1 ]]; then
+    logo "Install nvidia package"
     local listPkgs=(
       "linux-headers"
       "nvidia-dkms"
@@ -349,34 +356,28 @@ nvidiaPkgs() {
       "lib32-nvidia-utils"
     )
     installPkgs "${listPkgs[@]}"
-    ;;
-  *)
-    ;;
-  esac
+  fi
 
-  echo -e "\nPress any key to continue..."
-  read
+  return 0
 }
 
-installYay() {
+install_yay() {
   logo "Install yay"
 
   local temp_dir="/tmp/yay"
 
   if pacman -Q yay &>/dev/null; then
-    echo "[OK]: pkg yay is installed"
+    echo "[OK] pkg yay is installed"
 
-    echo -e "\nPress any key to continue..."
-    read
     return
   fi
 
   rm -rf "$temp_dir"
 
   if git clone https://aur.archlinux.org/yay.git "$temp_dir" &>>log; then
-    echo "[OK]: clone yay"
+    echo "[OK] clone yay"
   else
-    echo "[FAIL]: clone yay"
+    echo "[FAIL] clone yay"
     exit 1
   fi
 
@@ -384,44 +385,42 @@ installYay() {
     cd "$temp_dir" || exit 1
     makepkg -si --noconfirm
   ) &>>log; then
-    echo "[OK]: build yay"
+    echo "[OK] build yay"
   else
-    echo "[FAIL]: build yay"
+    echo "[FAIL] build yay"
     exit 1
   fi
 
   rm -rf "$temp_dir"
 
-  echo -e "\nPress any key to continue..."
-  read
+  return 0
 }
 
-installYayPkgsStd() {
+install_yay_pkgs_std() {
   logo "Yay std pkgs"
 
   listPkgs=(
     "i3lock-color"
     "qogir-cursor-theme"
   )
-  installYayPkgs "${listPkgs[@]}"
+  install_yay_pkgs "${listPkgs[@]}"
 
-  echo -e "\nPress any key to continue..."
-  read
+  return 0
 }
 
-zshConfig() {
+zsh_config() {
   logo "ZSH config"
 
   if sudo chsh -s /bin/zsh "$USER" >/dev/null 2>&1; then
-    echo "[OK]: zsh set as default shell"
+    echo "[OK] zsh set as default shell"
   else
-    echo "[FAIL]: zsh set as default shell"
+    echo "[FAIL] zsh set as default shell"
   fi
 
   if mkdir -p "$HOME/.config/zsh/plugins" &>>log; then
-    echo "[OK]: zsh directory created"
+    echo "[OK] zsh directory created"
   else
-    echo "[FAIL]: zsh directory created"
+    echo "[FAIL] zsh directory created"
   fi
 
   local repos=(
@@ -436,14 +435,14 @@ zshConfig() {
     dest="$HOME/.config/zsh/$target"
 
     if [ -d "$dest/.git" ]; then
-      echo "[OK]: $target already exists"
+      echo "[OK] $target already exists"
       continue
     fi
 
     if git clone "$repo" "$dest" &>>log; then
-      echo "[OK]: $target cloned"
+      echo "[OK] $target cloned"
     else
-      echo "[FAIL]: clone $repo"
+      echo "[FAIL] clone $repo"
     fi
   done
 
@@ -457,35 +456,34 @@ zshConfig() {
 
   for file in "${shellFiles[@]}"; do
     if rm "$HOME/$file" >/dev/null 2>&1; then
-      echo "[OK]: rm old $file"
+      echo "[OK] rm old $file"
     else
-      echo "[OK]: old $file empty"
+      echo "[OK] old $file empty"
     fi
 
     if cp "$dir/home/$file" "$HOME/$file"; then
-      echo "[OK]: paste $file"
+      echo "[OK] paste $file"
     else
-      echo "[FAIL]: paste $file"
+      echo "[FAIL] paste $file"
     fi
   done
 
-  echo -e "\nPress any key to continue..."
-  read
+  return 0
 }
 
-installLazyvim() {
+install_lazyvim() {
   logo "Install LazyVim"
 
   local nvim_dir="$HOME/.config/nvim"
 
   if [ -d "$nvim_dir" ]; then
-    echo "[OK]: LazyVim already installed"
+    echo "[OK] LazyVim already installed"
   else
     if git clone https://github.com/LazyVim/starter.git "$nvim_dir" >/dev/null 2>&1; then
       rm -rf "$nvim_dir/.git"
-      echo "[OK]: install LazyVim"
+      echo "[OK] install LazyVim"
     else
-      echo "[FAIL]: install LazyVim"
+      echo "[FAIL] install LazyVim"
     fi
   fi
 
@@ -502,9 +500,9 @@ return {
   },
 }
 EOF
-    echo "[OK]: snacks hidden files"
+    echo "[OK] snacks hidden files"
   else
-    echo "[FAIL]: snacks hidden files"
+    echo "[FAIL] snacks hidden files"
   fi
 
   local lazyvim_json="$nvim_dir/lazyvim.json"
@@ -513,57 +511,28 @@ EOF
       .extras += [$extra]
       | .extras |= unique
     ' "$lazyvim_json" >"$lazyvim_json.tmp" && mv "$lazyvim_json.tmp" "$lazyvim_json"; then
-    echo "[OK]: lazyvim extra mini-hipatterns"
+    echo "[OK] lazyvim extra mini-hipatterns"
   else
-    echo "[FAIL]: lazyvim extra mini-hipatterns"
+    echo "[FAIL] lazyvim extra mini-hipatterns"
   fi
 
-  echo -e "\nPress any key to continue..."
-  read
+  return 0
 }
 
-installFileHandlers() {
-  logo "File handlers"
-
-  local dir dest file
-  dir="$(dirname "$(realpath "$0")")"
-  dest="$HOME/.local/share/applications"
-
-  if mkdir -p "$dest"; then
-    echo "[OK]: applications dir"
-  else
-    echo "[FAIL]: applications dir"
-    exit 1
-  fi
-
-  for file in nvim.desktop vim.desktop; do
-    if cp "$dir/local/share/applications/$file" "$dest/$file"; then
-      echo "[OK]: $file"
-    else
-      echo "[FAIL]: $file"
-      exit 1
-    fi
-  done
-
-  if update-desktop-database "$dest" >/dev/null 2>&1; then
-    echo "[OK]: desktop database"
-  fi
-}
-
-ufwConfig() {
+ufw_config() {
   logo "UFW config"
 
   if sudo ufw default deny incoming >/dev/null 2>&1; then
-    printf "[OK]: ufw rule deny incoming\n"
+    printf "[OK] ufw rule deny incoming\n"
   else
-    printf "[FAIL]: ufw rule deny incoming\n"
+    printf "[FAIL] ufw rule deny incoming\n"
     exit 1
   fi
 
   if sudo ufw default allow outgoing >/dev/null 2>&1; then
-    printf "[OK]: ufw rule allow outgoing\n"
+    printf "[OK] ufw rule allow outgoing\n"
   else
-    printf "[FAIL]: ufw rule allow outgoing\n"
+    printf "[FAIL] ufw rule allow outgoing\n"
     exit 1
   fi
 
@@ -571,36 +540,37 @@ ufwConfig() {
   enable_status=${enable_status:-0}
 
   if [ "$enable_status" -eq 0 ]; then
-    printf "[OK]: ufw enabled\n"
+    printf "[OK] ufw enabled\n"
   else
-    printf "[FAIL]: ufw enable\n"
+    printf "[FAIL] ufw enable\n"
     [ -n "$enable_output" ] && printf "%s\n" "$enable_output"
   fi
 
   if sudo systemctl enable ufw.service >/dev/null 2>&1; then
-    printf "[OK]: ufw service enabled\n"
+    printf "[OK] ufw service enabled\n"
   else
-    printf "[FAIL]: ufw service enable\n"
+    printf "[FAIL] ufw service enable\n"
   fi
 
-  echo -e "\nPress any key to continue..."
-  read
+  return 0
 }
 
 main() {
-  createStdDir
-  systemPkgs
-  enableMultilib
-  installYay
-  installYayPkgsStd
-  personalPkgs
-  startServices
-  installFonts
-  nvidiaPkgs
-  zshConfig
-  installLazyvim
-  installFileHandlers
-  ufwConfig
+  local personal_pkgs=$(input_value "Do you want install karakurt pks? (y/n): ")
+  local nvidia_drivers=$(input_value "Do you want install nvidia drivers? (y/n): ")
+
+  create_std_dir
+  system_pkgs
+  enable_multilib
+  install_yay
+  install_yay_pkgs_std
+  personal_pkgs $personal_pkgs
+  start_services
+  install_fonts
+  nvidia_pkgs $nvidia_drivers
+  zsh_config
+  install_lazyvim
+  ufw_config
   exit 0
 }
 
