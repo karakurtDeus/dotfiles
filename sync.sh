@@ -25,11 +25,6 @@ listHomeFiles=(
   ".Xresources"
 )
 
-listLocalShareFiles=(
-  "applications/nvim.desktop"
-  "applications/vim.desktop"
-)
-
 copyConfig() {
   if rm -R ./config &>>log; then
     echo "[OK]: rm config dir"
@@ -68,20 +63,6 @@ copyConfig() {
 
   for file in "${listHomeFiles[@]}"; do
     if cp "$HOME/$file" ./home &>>log; then
-      echo "[OK]: $file copy"
-    else
-      echo "[FAIL]: $file copy"
-      exit 1
-    fi
-  done
-
-  for file in "${listLocalShareFiles[@]}"; do
-    if [ ! -f "$HOME/.local/share/$file" ]; then
-      echo "[OK]: $file skip"
-      continue
-    fi
-
-    if mkdir -p "./local/share/$(dirname "$file")" &>>log && cp "$HOME/.local/share/$file" "./local/share/$file" &>>log; then
       echo "[OK]: $file copy"
     else
       echo "[FAIL]: $file copy"
