@@ -172,7 +172,7 @@ system_pkgs() {
     # network tools
     "rsync"
     "nethogs" #> program connect net scan
-    "nmap"    #> port scan
+    "nmap"    #> port scan + ncat -v 192.168.1.34 22 (equal telnet)
     "mtr"     #> traceroute && ping
     "iftop"   #> traffic connects, example: iftop -i enp3s0f3u1 -n -P
     "bind"    #> dig && nslookup
