@@ -169,6 +169,15 @@ system_pkgs() {
     # lockscreen
     "xorg-xdpyinfo"
 
+    # network tools
+    "rsync"
+    "nethogs" #> program connect net scan
+    "nmap"    #> port scan
+    "mtr"     #> traceroute && ping
+    "iftop"   #> traffic connects, example: iftop -i enp3s0f3u1 -n -P
+    "bind"    #> dig && nslookup
+    "tcpdump"
+
     # WM manager and other tools
     "bspwm"
     "xorg-xsetroot"
@@ -487,7 +496,7 @@ install_lazyvim() {
     fi
   fi
 
-  if cat >"$nvim_dir/lua/plugins/snacks.lua" <<'EOF'; then
+  if cat >"$nvim_dir/lua/plugins/snacks.lua" <<'EOF'
 return {
   "folke/snacks.nvim",
   opts = {
@@ -500,6 +509,7 @@ return {
   },
 }
 EOF
+  then
     echo "[OK] snacks hidden files"
   else
     echo "[FAIL] snacks hidden files"
