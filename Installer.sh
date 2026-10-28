@@ -515,6 +515,15 @@ EOF
     echo "[FAIL] snacks hidden files"
   fi
 
+  local dir
+  dir="$(dirname "$(realpath "$0")")"
+  mkdir -p "$nvim_dir/lua/plugins"
+  if cp "$dir/nvim/lua/plugins/rice.lua" "$nvim_dir/lua/plugins/rice.lua"; then
+    echo "[OK] nvim rice colors"
+  else
+    echo "[FAIL] nvim rice colors"
+  fi
+
   local lazyvim_json="$nvim_dir/lazyvim.json"
 
   if [ -f "$lazyvim_json" ] && jq --arg extra "lazyvim.plugins.extras.util.mini-hipatterns" '
