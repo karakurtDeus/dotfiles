@@ -485,9 +485,10 @@ install_lazyvim() {
 
   local nvim_dir="$HOME/.config/nvim"
 
-  if [ -d "$nvim_dir" ]; then
+  if [ -f "$nvim_dir/init.lua" ]; then
     echo "[OK] LazyVim already installed"
   else
+    rm -rf "$nvim_dir"
     if git clone https://github.com/LazyVim/starter.git "$nvim_dir" >/dev/null 2>&1; then
       rm -rf "$nvim_dir/.git"
       echo "[OK] install LazyVim"

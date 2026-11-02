@@ -120,6 +120,16 @@ updateConfig() {
   if update-desktop-database "$HOME/.local/share/applications" &>>log; then
     echo "[OK]: desktop database"
   fi
+
+  if [ -f "$HOME/.config/nvim/init.lua" ]; then
+    mkdir -p "$HOME/.config/nvim/lua/plugins"
+    if cp "./nvim/lua/plugins/rice.lua" "$HOME/.config/nvim/lua/plugins/rice.lua"; then
+      echo "[OK]: nvim rice colors"
+    else
+      echo "[FAIL]: nvim rice colors"
+      exit 1
+    fi
+  fi
 }
 
 case "$1" in
