@@ -7,6 +7,7 @@ listConfigDirs=(
   "flameshot"
   "gtk-3.0"
   "gtk-4.0"
+  "eww"
   "xdg-desktop-portal"
   "dconf"
   "dunst"

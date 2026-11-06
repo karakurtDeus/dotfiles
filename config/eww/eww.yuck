@@ -1,0 +1,75 @@
+(defvar page "Control Panel")
+
+(deflisten info :initial ""
+  "id -un")
+
+(deflisten cpu_info :initial ""
+  "echo CPU: $(cat /proc/cpuinfo | grep 'model name' | head -n 1 | awk -F': ' '{print $2}')")
+
+(defpoll pkgs_info :interval "60s"
+  "echo Packages: $(pacman -Q | wc -l)")
+
+
+(deflisten ram_info :initial ""
+  "echo RAM: $(free -h | grep 'Mem' | awk '{print $2}')")
+
+(defpoll theme_name :interval "2s"
+  "echo Rice: $(cat $HOME/.config/bspwm/rice)")
+
+(defpoll theme_image :interval "2s"
+  "rice=$(cat $HOME/.config/bspwm/rice); printf '%s' $HOME/.config/bspwm/rices/$rice/rice-wallpaper.*")
+
+(defpoll volume :interval "1s" :initial "0"
+  "wpctl get-volume @DEFAULT_AUDIO_SINK@ | awk '{printf \"%d\", $2 * 100}'")
+
+(defpoll mixer :interval "1s"
+  "sh $HOME/.config/eww/mixer.sh")
+
+(defpoll sink_muted :interval "1s" :initial "0"
+  "wpctl get-volume @DEFAULT_AUDIO_SINK@ | awk 'BEGIN{m=0} /MUTED/{m=1} END{printf \"%d\", m}'")
+
+(defpoll source_muted :interval "1s" :initial "0"
+  "wpctl get-volume @DEFAULT_AUDIO_SOURCE@ | awk 'BEGIN{m=0} /MUTED/{m=1} END{printf \"%d\", m}'")
+
+(defwidget control_panel []
+  (box :space-evenly false
+    (box :orientation "v" :space-evenly false :spacing 8
+      (button :onclick "eww update page='Control Panel'" " Control Panel")
+    )
+    (box :orientation "v" :hexpand true :halign "fill" :valign "start" :space-evenly false
+      (label :halign "start" :visible {page == "Control Panel"} :text "")
+      (box :orientation "v" :spacing 8 :space-evenly false :hexpand true :halign "center" :visible {page == "Control Panel"}
+        (image :path theme_image
+               :image-width 220
+               :image-height 140
+               :halign "center")
+        (label :halign "center" :text info))
+      (label :halign "start" :visible {page == "Control Panel"} :text "")
+      (label :halign "start" :visible {page == "Control Panel"} :text theme_name)
+      (label :halign "start" :visible {page == "Control Panel"} :text cpu_info)
+      (label :halign "start" :visible {page == "Control Panel"} :text ram_info)
+      (label :halign "start" :visible {page == "Control Panel"} :text pkgs_info)
+      (label :halign "start" :visible {page == "Control Panel"} :text "")
+      (box :spacing 8 :hexpand true :space-evenly false :visible {page == "Control Panel"}
+        (label :halign "start" :text "Volume")
+        (scale :min 0 :max 100 :hexpand true :value volume
+               :onchange "wpctl set-volume @DEFAULT_AUDIO_SINK@ {}%"))
+      (literal :content mixer :visible {page == "Control Panel"})
+      (box :spacing 16 :hexpand true :halign "center" :space-evenly false :visible {page == "Control Panel"}
+        (button :style "background: transparent; border: none; box-shadow: none;"
+                :onclick "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
+          (label :style "font-family: 'Symbols Nerd Font'; font-size: 22px;"
+                 :text {sink_muted == 1 ? "󰖁" : "󰕾"}))
+        (button :style "background: transparent; border: none; box-shadow: none;"
+                :onclick "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"
+          (label :style "font-family: 'Symbols Nerd Font'; font-size: 22px;"
+                 :text {source_muted == 1 ? "󰍭" : "󰍬"})))
+      (label :halign "start" :visible {page == "Appearance"} :text "Theme"))))
+
+(defwindow control_panel
+  :windowtype "normal"
+  :wm-ignore false
+  :geometry (geometry
+    :width "800px"
+    :height "500px")
+  (control_panel))
